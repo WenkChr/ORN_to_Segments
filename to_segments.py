@@ -35,38 +35,47 @@ if 'ORN_JUNCTION' in tables:
     tables.remove('ORN_STREET_NAME_PARSED')
 
 
-
+point_data = 
 roads_df = pd.DataFrame.spatial.from_featureclass(road_ele_data, dtypes= {'OGF_ID': 'int', 'FROM_JUNCTION_ID':'int', 'TO_JUNCTION_ID': 'int'}) 
-for table in tables:
+for table in tables: #Loop for line tables
     field_prefix = table[4:]
     print(f'Running segmentification on: {table}')
     tbl_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, table))
+    tbl_df = tbl_df.drop(['OBJECTID'], axis=1)
+    #Rename Table fields
+    tbl_df.rename(columns={'AGENCY_NAME' : field_prefix + '_AGENCY', 
+                            'EFFECTIVE_DATETIME' : field_prefix + '_EFF_DATE',
+                            'EVENT_ID' : field_prefix + '_EVENT_ID',
+                            'NATIONAL_UUID' : field_prefix + '_NAT_UUID'}, 
+                            inplace= True)
 
-    tbl_df[table + 'measure_dif'] = np.where(tbl_df['FROM_MEASURE'] > tbl_df['TO_MEASURE'], 
+    tbl_df[field_prefix + '_measure_dif'] = np.where(tbl_df['FROM_MEASURE'] > tbl_df['TO_MEASURE'], 
                         tbl_df['FROM_MEASURE'] - tbl_df['TO_MEASURE'], 
                         tbl_df['TO_MEASURE'] - tbl_df['FROM_MEASURE']) #Get the measure dif value 
 
     print(f'Roads length: {len(roads_df)} Table Length: {len(tbl_df)}')
     merged = roads_df.merge(tbl_df, how= 'left', left_on='OGF_ID', right_on= 'ORN_ROAD_NET_ELEMENT_ID')
     #Sort measure dif values highest to lowest and then drop duplicate OGF_ID records from the dataframe. Leaving only the largest dif (longest seg)
-    merged.sort_values(by=[table + 'measure_dif'], ascending= True)
+    merged.sort_values(by=[field_prefix + '_measure_dif'], ascending= True)
     merged = merged.drop_duplicates(subset=['OGF_ID'], keep='first')
     merged.astype({'OGF_ID' : int})
     print('Length of dataframe: ' + str(len(merged)))
-    merged = merged.drop( [table + 'measure_dif', 'FROM_MEASURE', 'TO_MEASURE'], axis=1)
+    merged = merged.drop( [field_prefix + '_measure_dif', 
+                        'ORN_ROAD_NET_ELEMENT_ID', 
+                        'FROM_MEASURE', 
+                        'TO_MEASURE'],
+                         axis=1) # Removes non-essential fields
     roads_df = merged
+
+
 for f in roads_df.columns:
     print(f)
-sys.exit()
+
+#Export the complete roads df
+arcpy.env.workspace = workingGDB
 roads_df.spatial.to_featureclass('full_test', overwrite= True)
 
 # Narrow data to current zone
-ORN_OGF_IDs = unique_values(road_ele_data, 'OGF_ID')
-
-# num_lanes_tbl = arcpy.TableToTable_conversion(os.path.join(ORN_GDB, 'ORN_NUMBER_OF_LANES'), workingGDB, 
-#                                                             'ORN_NUMBER_OF_LANES', 
-#                                                             'ORN_ROAD_NET_ELEMENT_ID IN ' + str(tuple(ORN_OGF_IDs)))
-
-
+#ORN_OGF_IDs = unique_values(road_ele_data, 'OGF_ID')
 
 print('DONE!')
