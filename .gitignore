@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+Non_Sensitive.gdb/
+workingGDB.gdb/
+ORN_ROAD_NET_ELEMENT_ESRI_EN.xml
+ORN_ROAD_NET_ELEMENT_ISO_EN.xml
+ORN_to_Segments.aprx
+Index/

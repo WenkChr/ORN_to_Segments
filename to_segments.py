@@ -34,9 +34,35 @@ if 'ORN_JUNCTION' in tables:
     tables.remove('ORN_UNDERPASS')
     tables.remove('ORN_STREET_NAME_PARSED')
 
+#Make Address Ranges on L/R
+add_rng_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, 'ORN_ADDRESS_INFO')) # get full dataset
+add_rng_base = add_rng_df.filter(['ORN_ROAD_NET_ELEMENT_ID', 
+                                'FULL_STREET_NAME', 
+                                'AGENCY_NAME',
+                                'EFFECTIVE_DATETIME',
+                                'HOUSE_NUMBER_STRUCTURE'], 
+                                axis=1).drop_duplicates(subset=['ORN_ROAD_NET_ELEMENT_ID'],  keep='first') # Base for adding L/R attributes to the table
 
-point_data = 
+# for row in add_rng_base.itertuples():
+#     print (row)
+#     OGF_ID_match = add_rng_df.loc[add_rng_df['ORN_ROAD_NET_ELEMENT_ID'] == row[1]['ORN_ROAD_NET_ELEMENT_ID', 
+#                                                                                 'FIRST_HOUSE_NUMBER',
+#                                                                                 'LAST_HOUSE_NUMBER',
+#                                                                                 'STREET_SIDE']]
+#     if OGF_ID_match['STREET_SIDE'] == 'Left':
+#         print('left')
+#     if OGF_ID_match['STREET_SIDE'] == 'Right':
+#         print('right')
+#     if OGF_ID_match['STREET_SIDE'] == 'Both':
+#         print('both')
+#     print(OGF_ID_match.head())
+#     sys.exit()
+
+print(add_rng_base.head())
+
+sys.exit()
 roads_df = pd.DataFrame.spatial.from_featureclass(road_ele_data, dtypes= {'OGF_ID': 'int', 'FROM_JUNCTION_ID':'int', 'TO_JUNCTION_ID': 'int'}) 
+
 for table in tables: #Loop for line tables
     field_prefix = table[4:]
     print(f'Running segmentification on: {table}')
@@ -76,6 +102,6 @@ arcpy.env.workspace = workingGDB
 roads_df.spatial.to_featureclass('full_test', overwrite= True)
 
 # Narrow data to current zone
-#ORN_OGF_IDs = unique_values(road_ele_data, 'OGF_ID')
+
 
 print('DONE!')
