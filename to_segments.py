@@ -14,18 +14,23 @@ def unique_values(fc, field):
 '''                     Conversion Methodology
 1.) Get road layer, read into pandas dataframe 
 2.) Get list of lookup tables
-3.) Loop through lookup tables and take only those fields that are needed 
+3.) Create add address range data and join that to the roads dataset
+4.) Loop through certain lookup tables and take only those fields that are needed renaming where necessary
 '''
-
+#----------------------------------------------------------------------------------------------------------------
+#Inputs
 
 directory = os.getcwd()
 ORN_GDB = os.path.join(directory, 'Non_Sensitive.gdb')
 workingGDB = os.path.join(directory, 'workingGDB.gdb') 
-road_ele_data = os.path.join(workingGDB, 'ORN_net_element_tester')
+road_ele_data = os.path.join(ORN_GDB, 'ORN_ROAD_NET_ELEMENT')
+
+#----------------------------------------------------------------------------------------------------------------
+# Main script
 
 arcpy.env.workspace = ORN_GDB 
 tables = arcpy.ListTables()
-
+print('Reading road data into spatial dataframe')
 roads_df = pd.DataFrame.spatial.from_featureclass(road_ele_data, dtypes= {'OGF_ID': 'int', 'FROM_JUNCTION_ID':'int', 'TO_JUNCTION_ID': 'int'}) 
 OGF_IDS = roads_df.OGF_ID.unique()
 # Remove ORN_JUNCTION because it is not applicable 
@@ -35,14 +40,24 @@ if 'ORN_JUNCTION' in tables:
     tables.remove('ORN_TOLL_POINT')
     tables.remove('ORN_UNDERPASS')
     tables.remove('ORN_STREET_NAME_PARSED')
+    tables.remove('ORN_ADDRESS_INFO')
 
 #Make Address Ranges on L/R
 add_rng_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, 'ORN_ADDRESS_INFO')) # get full dataset
+field_prefix = 'ADDRESS_INFO'
+add_rng_df.rename(columns={'AGENCY_NAME' : field_prefix + '_AGENCY', 
+                        'EFFECTIVE_DATETIME' : field_prefix + '_EFF_DATE',
+                        'EVENT_ID' : field_prefix + '_EVENT_ID',
+                        }, 
+                        inplace= True)
+# Select only rows that are in the section currently being worked on
 add_rng_df = add_rng_df[add_rng_df['ORN_ROAD_NET_ELEMENT_ID'].isin(OGF_IDS)]
 add_rng_base = add_rng_df[['ORN_ROAD_NET_ELEMENT_ID', 
                             'FULL_STREET_NAME', 
-                            'AGENCY_NAME',
-                            'EFFECTIVE_DATETIME',
+                            field_prefix + '_AGENCY',
+                            field_prefix + '_EFF_DATE',
+                            field_prefix + '_EVENT_ID',
+                            'STREET_SIDE',
                             'HOUSE_NUMBER_STRUCTURE']].drop_duplicates(subset=['ORN_ROAD_NET_ELEMENT_ID'],  keep='first') # Base for adding L/R attributes to the table
 print('Calculating Address Range data')
 for row in add_rng_df.itertuples():
@@ -64,9 +79,10 @@ for row in add_rng_df.itertuples():
         add_rng_base.at[index, 'R_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
         add_rng_base.at[index, 'L_FIRST_HOUSE_NUM'] = row.FIRST_HOUSE_NUMBER
         add_rng_base.at[index, 'L_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
-add_rng_base.to_csv(os.path.join(directory, 'add_range_test.csv'))
 
-sys.exit()  
+#Merge the Address Range data to the roads data beofre looping other tables 
+roads_df = roads_df.merge(add_rng_base, how= 'left', left_on='OGF_ID', right_on= 'ORN_ROAD_NET_ELEMENT_ID')
+roads_df = roads_df.drop(['ORN_ROAD_NET_ELEMENT_ID'], axis=1)
 print('Adding non address data to table')
 for table in tables: #Loop for line tables
     field_prefix = table[4:]
@@ -77,7 +93,9 @@ for table in tables: #Loop for line tables
     tbl_df.rename(columns={'AGENCY_NAME' : field_prefix + '_AGENCY', 
                             'EFFECTIVE_DATETIME' : field_prefix + '_EFF_DATE',
                             'EVENT_ID' : field_prefix + '_EVENT_ID',
-                            'NATIONAL_UUID' : field_prefix + '_NAT_UUID'}, 
+                            'NATIONAL_UUID' : field_prefix + '_NAT_UUID', 
+                            'STREET_SIDE': field_prefix + '_STREET_SIDE', 
+                            'FULL_STREET_NAME': field_prefix + '_FULL_STREET_NAME'}, 
                             inplace= True)
 
     tbl_df[field_prefix + '_measure_dif'] = np.where(tbl_df['FROM_MEASURE'] > tbl_df['TO_MEASURE'], 
@@ -98,15 +116,8 @@ for table in tables: #Loop for line tables
                          axis=1) # Removes non-essential fields
     roads_df = merged
 
-
-for f in roads_df.columns:
-    print(f)
-
 #Export the complete roads df
-arcpy.env.workspace = workingGDB
-roads_df.spatial.to_featureclass('full_test', overwrite= True)
-
-# Narrow data to current zone
-
+print('Exporting compiled dataset.')
+roads_df.spatial.to_featureclass(os.path.join(workingGDB, 'full_test'), overwrite= True)
 
 print('DONE!')
