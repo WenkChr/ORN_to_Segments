@@ -53,7 +53,6 @@ add_rng_df.rename(columns={'AGENCY_NAME' : field_prefix + '_AGENCY',
 # Select only rows that are in the section currently being worked on
 add_rng_df = add_rng_df[add_rng_df['ORN_ROAD_NET_ELEMENT_ID'].isin(OGF_IDS)]
 add_rng_base = add_rng_df[['ORN_ROAD_NET_ELEMENT_ID', 
-                            'FULL_STREET_NAME', 
                             field_prefix + '_AGENCY',
                             field_prefix + '_EFF_DATE',
                             field_prefix + '_EVENT_ID',
@@ -69,11 +68,13 @@ for row in add_rng_df.itertuples():
         add_rng_base.at[index, 'L_FIRST_HOUSE_NUM'] = row.FIRST_HOUSE_NUMBER
         add_rng_base.at[index, 'L_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
         add_rng_base.at[index, 'L_HOUSE_NUMBER_STRUCTURE_CDE'] = Structure_CDE[row.HOUSE_NUMBER_STRUCTURE]
-        
+        add_rng_base.at[index, 'L_FULL_STREET_NAME'] = row.FULL_STREET_NAME
+
     if row.STREET_SIDE == 'Right':
         add_rng_base.at[index, 'R_FIRST_HOUSE_NUM'] = row.FIRST_HOUSE_NUMBER
         add_rng_base.at[index, 'R_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
         add_rng_base.at[index, 'R_HOUSE_NUMBER_STRUCTURE_CDE'] = Structure_CDE[row.HOUSE_NUMBER_STRUCTURE]
+        add_rng_base.at[index, 'R_FULL_STREET_NAME'] = row.FULL_STREET_NAME
 
     if row.STREET_SIDE == 'Both':
         add_rng_base.at[index, 'R_FIRST_HOUSE_NUM'] = row.FIRST_HOUSE_NUMBER
@@ -82,6 +83,8 @@ for row in add_rng_df.itertuples():
         add_rng_base.at[index, 'L_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
         add_rng_base.at[index, 'L_HOUSE_NUMBER_STRUCTURE_CDE'] = Structure_CDE[row.HOUSE_NUMBER_STRUCTURE]
         add_rng_base.at[index, 'R_HOUSE_NUMBER_STRUCTURE_CDE'] = Structure_CDE[row.HOUSE_NUMBER_STRUCTURE]
+        add_rng_base.at[index, 'L_FULL_STREET_NAME'] = row.FULL_STREET_NAME
+        add_rng_base.at[index, 'R_FULL_STREET_NAME'] = row.FULL_STREET_NAME
 
 #Merge the Address Range data to the roads data beofre looping other tables 
 roads_df = roads_df.merge(add_rng_base, how= 'left', left_on='OGF_ID', right_on= 'ORN_ROAD_NET_ELEMENT_ID')
