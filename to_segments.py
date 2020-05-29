@@ -10,6 +10,12 @@ def unique_values(fc, field):
     with arcpy.da.SearchCursor(fc, field_names= [field]) as cursor:
         return sorted({row[0] for row in cursor})
 
+def NumberizeField(df, field, numberize_dict):
+    # will return a new field in pandas dataframe with the field name + _CDE
+    df[field + '_CDE'] = df[field]
+    df = df[field + '_CDE'].replace(numberize_dict, inplace= False).asint()
+    return df 
+
 #Data Source: https://geohub.lio.gov.on.ca/datasets/mnrf::ontario-road-network-orn-road-net-element
 '''                     Conversion Methodology
 1.) Get road layer, read into pandas dataframe 
