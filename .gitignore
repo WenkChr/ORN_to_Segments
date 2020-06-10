@@ -133,3 +133,10 @@ ORN_ROAD_NET_ELEMENT_ESRI_EN.xml
 ORN_ROAD_NET_ELEMENT_ISO_EN.xml
 ORN_to_Segments.aprx
 Index/
+Files_for_delivery.gdb/
+test.gdb/
+*.cpg
+*.dbf
+*.prj
+*.shp
+*.shx
