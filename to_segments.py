@@ -13,23 +13,27 @@ def unique_values(fc, field):
 def NumberizeField(df, field, numberize_dict):
     # will return a new field in pandas dataframe with the field name + _CDE
     df[field + '_CDE'] = df[field]
-    df = df[field + '_CDE'].replace(numberize_dict, inplace= False).asint()
-    return df 
+    df[field + '_CDE'].replace(numberize_dict, inplace= True).asint()
+    
 
 #Data Source: https://geohub.lio.gov.on.ca/datasets/mnrf::ontario-road-network-orn-road-net-element
 '''                     Conversion Methodology
+Note that the blocked passages and toll point data is excluded from this methodology because the tool needed in arcgis was not licenced.
+These data points were created in QGIS instead 
 1.) Get road layer, read into pandas dataframe 
 2.) Get list of lookup tables
 3.) Create add address range data and join that to the roads dataset
 4.) Loop through certain lookup tables and take only those fields that are needed renaming where necessary
+5.) While looping if a line segment has multiple associated events take the event data that covers the longest part of the segment
 '''
 #----------------------------------------------------------------------------------------------------------------
 #Inputs
 
 directory = os.getcwd()
 ORN_GDB = os.path.join(directory, 'Non_Sensitive.gdb')
-workingGDB = os.path.join(directory, 'workingGDB.gdb') 
-road_ele_data = os.path.join(ORN_GDB, 'ORN_ROAD_NET_ELEMENT')
+workingGDB = os.path.join(directory, 'workingGDB.gdb')
+outGDB = os.path.join(directory, 'files_for_delivery.gdb') 
+road_ele_data = os.path.join(workingGDB, 'ORN_net_element_tester')
 
 #----------------------------------------------------------------------------------------------------------------
 # Main script
@@ -94,7 +98,11 @@ for row in add_rng_df.itertuples():
 
 #Merge the Address Range data to the roads data beofre looping other tables 
 roads_df = roads_df.merge(add_rng_base, how= 'left', left_on='OGF_ID', right_on= 'ORN_ROAD_NET_ELEMENT_ID')
-roads_df = roads_df.drop(['ORN_ROAD_NET_ELEMENT_ID'], axis=1)
+roads_df = roads_df.drop(['OBJECTID', 'ORN_ROAD_NET_ELEMENT_ID', 'LENGTH', 'SHAPE','STREET_SIDE', 'FROM_JUNCTION_ID', 'TO_JUNCTION_ID'], axis=1)
+
+for f in roads_df.columns: print(f)
+sys.exit()
+
 print('Adding non address data to table')
 for table in tables: #Loop for line tables
     field_prefix = table[4:]
@@ -122,14 +130,14 @@ for table in tables: #Loop for line tables
     merged.astype({'OGF_ID' : int})
     print('Length of dataframe: ' + str(len(merged)))
     merged = merged.drop( [field_prefix + '_measure_dif', 
-                        'ORN_ROAD_NET_ELEMENT_ID', 
-                        'FROM_MEASURE', 
-                        'TO_MEASURE'],
+                        'ORN_ROAD_NET_ELEMENT_ID'],
                          axis=1) # Removes non-essential fields
     roads_df = merged
 
+
+
 #Export the complete roads df
 print('Exporting compiled dataset.')
-roads_df.spatial.to_featureclass(os.path.join(workingGDB, 'full_test'), overwrite= True)
+roads_df.spatial.to_featureclass(os.path.join(directory, 'files_for_delivery.gdb', 'test_fc'), overwrite= True)
 
 print('DONE!')
