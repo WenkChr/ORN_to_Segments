@@ -10,10 +10,10 @@ def unique_values(fc, field):
     with arcpy.da.SearchCursor(fc, field_names= [field]) as cursor:
         return sorted({row[0] for row in cursor})
 
-def NumberizeField(df, field, numberize_dict):
+def NumberizeField(df, field, outFieldName, numberize_dict):
     # will return a new field in pandas dataframe with the field name + _CDE
-    df[field + '_CDE'] = df[field]
-    df[field + '_CDE'].replace(numberize_dict, inplace= True).asint()
+    df[outFieldName + '_CDE'] = df[field]
+    df[outFieldName + '_CDE'].replace(numberize_dict, inplace= True)
     
 
 #Data Source: https://geohub.lio.gov.on.ca/datasets/mnrf::ontario-road-network-orn-road-net-element
@@ -72,36 +72,33 @@ print('Calculating Address Range data')
 for row in add_rng_df.itertuples():
     index = add_rng_base.ORN_ROAD_NET_ELEMENT_ID[add_rng_base.ORN_ROAD_NET_ELEMENT_ID == row.ORN_ROAD_NET_ELEMENT_ID].index.tolist()[0]
     Structure_CDE = {'Unknown' : -1, 'None' : 0, 'Even' : 1, 'Odd' : 2, 'Mixed' : 3, 'Irregular' : 4}
-    
     # Calculate Address range columns and HOUSE_NUMBER_STRUCTURE_CDE based on STREET_SIDE column value
     if row.STREET_SIDE == 'Left':
+        add_rng_base.at[index, 'L_HOUSE_NUMBER_STRUCTURE_CDE'] = Structure_CDE[row.HOUSE_NUMBER_STRUCTURE]
         add_rng_base.at[index, 'L_FIRST_HOUSE_NUM'] = row.FIRST_HOUSE_NUMBER
         add_rng_base.at[index, 'L_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
-        add_rng_base.at[index, 'L_HOUSE_NUMBER_STRUCTURE_CDE'] = Structure_CDE[row.HOUSE_NUMBER_STRUCTURE]
         add_rng_base.at[index, 'L_FULL_STREET_NAME'] = row.FULL_STREET_NAME
 
     if row.STREET_SIDE == 'Right':
+        add_rng_base.at[index, 'R_HOUSE_NUMBER_STRUCTURE_CDE'] = Structure_CDE[row.HOUSE_NUMBER_STRUCTURE]
         add_rng_base.at[index, 'R_FIRST_HOUSE_NUM'] = row.FIRST_HOUSE_NUMBER
         add_rng_base.at[index, 'R_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
-        add_rng_base.at[index, 'R_HOUSE_NUMBER_STRUCTURE_CDE'] = Structure_CDE[row.HOUSE_NUMBER_STRUCTURE]
         add_rng_base.at[index, 'R_FULL_STREET_NAME'] = row.FULL_STREET_NAME
 
     if row.STREET_SIDE == 'Both':
-        add_rng_base.at[index, 'R_FIRST_HOUSE_NUM'] = row.FIRST_HOUSE_NUMBER
-        add_rng_base.at[index, 'R_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
-        add_rng_base.at[index, 'L_FIRST_HOUSE_NUM'] = row.FIRST_HOUSE_NUMBER
-        add_rng_base.at[index, 'L_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
         add_rng_base.at[index, 'L_HOUSE_NUMBER_STRUCTURE_CDE'] = Structure_CDE[row.HOUSE_NUMBER_STRUCTURE]
         add_rng_base.at[index, 'R_HOUSE_NUMBER_STRUCTURE_CDE'] = Structure_CDE[row.HOUSE_NUMBER_STRUCTURE]
+        add_rng_base.at[index, 'L_FIRST_HOUSE_NUM'] = row.FIRST_HOUSE_NUMBER
+        add_rng_base.at[index, 'L_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
+        add_rng_base.at[index, 'R_FIRST_HOUSE_NUM'] = row.FIRST_HOUSE_NUMBER
+        add_rng_base.at[index, 'R_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
         add_rng_base.at[index, 'L_FULL_STREET_NAME'] = row.FULL_STREET_NAME
         add_rng_base.at[index, 'R_FULL_STREET_NAME'] = row.FULL_STREET_NAME
 
 #Merge the Address Range data to the roads data beofre looping other tables 
 roads_df = roads_df.merge(add_rng_base, how= 'left', left_on='OGF_ID', right_on= 'ORN_ROAD_NET_ELEMENT_ID')
-roads_df = roads_df.drop(['OBJECTID', 'ORN_ROAD_NET_ELEMENT_ID', 'LENGTH', 'SHAPE','STREET_SIDE', 'FROM_JUNCTION_ID', 'TO_JUNCTION_ID'], axis=1)
-
-for f in roads_df.columns: print(f)
-sys.exit()
+roads_df = roads_df.drop(['OBJECTID', 'ORN_ROAD_NET_ELEMENT_ID', 'HOUSE_NUMBER_STRUCTURE', 
+                        'LENGTH', 'SHAPE','STREET_SIDE', 'FROM_JUNCTION_ID', 'TO_JUNCTION_ID'], axis=1)
 
 print('Adding non address data to table')
 for table in tables: #Loop for line tables
@@ -129,13 +126,62 @@ for table in tables: #Loop for line tables
     merged = merged.drop_duplicates(subset=['OGF_ID'], keep='first')
     merged.astype({'OGF_ID' : int})
     print('Length of dataframe: ' + str(len(merged)))
-    merged = merged.drop( [field_prefix + '_measure_dif', 
+    merged = merged.drop( [field_prefix + '_measure_dif',
+                        field_prefix + '_EVENT_ID',
+                        'FROM_MEASURE',
+                        'TO_MEASURE', 
                         'ORN_ROAD_NET_ELEMENT_ID'],
                          axis=1) # Removes non-essential fields
     roads_df = merged
 
+#Add street name parsed fields
 
+# Encode certain fields from the loop
+NumberizeField(roads_df, 'ACQUISITION_TECHNIQUE', {'UNKNKOWN' : -1,
+                                                'NONE' : 0,
+                                                'OTHER' : 1,
+                                                'GPS' : 2,
+                                                'ORTHOIMAGE' : 3,
+                                                'ORTHOPHOTO' : 4,
+                                                'VECTOR DATA' : 5,
+                                                'PAPER MAP' : 6,
+                                                'FIELD COMPLETION' : 7,
+                                                'RASTER DATA' : 8,
+                                                'DIGITAL ELEVATION MODEL' : 9,
+                                                'AERIAL PHOTO' : 10,
+                                                'RAW IMAGERY DATA' : 11,
+                                                'COMPUTED' : 12})
 
+NumberizeField(roads_df, 'ROAD_CLASS', {'Freeway' : 1, 
+                                        'Expressway / Highway' : 2, 
+                                        'Arterial' : 3, 
+                                        'Collector' : 4,
+                                        'Local / Street' : 5,
+                                        'Local / Strata' : 6,
+                                        'Local / Unknown' : 7,
+                                        'Alleyway / Lane' : 8,
+                                        'Ramp' : 9,
+                                        'Resource / Recreation' : 10,
+                                        'Rapid Transit' : 11,
+                                        'Service Lane' : 12,
+                                        'Winter' : 13})   
+
+NumberizeField(roads_df, 'STRUCTURE_TYPE', {'None' : 0,
+                                            'Bridge' : 1,
+                                            'Bridge Covered' : 2,
+                                            'Bridge Moveable' : 3,
+                                            'Tunnel'  : 5,
+                                            'Dam' : 7})
+
+NumberizeField(roads_df, 'DIRECTION_OF_TRAFFIC_FLOW', {'Unknown' : -1, 
+                                                    'Both' : 1,
+                                                    'Positive' : 2, # 'Positive' - flow of traffic same as digitizing direction (Same Direction)
+                                                    'Negative' : 3 # 'Negative' - flow of traffic different from digitizing direction (Opposite Direction)
+                                                    }) 
+NumberizeField(roads_df, 'SURFACE_TYPE', {'Dirt' : })
+
+for f in roads_df.columns: print(f)
+sys.exit()
 #Export the complete roads df
 print('Exporting compiled dataset.')
 roads_df.spatial.to_featureclass(os.path.join(directory, 'files_for_delivery.gdb', 'test_fc'), overwrite= True)
