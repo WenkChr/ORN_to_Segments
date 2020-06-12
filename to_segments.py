@@ -14,6 +14,7 @@ def NumberizeField(df, field, outFieldName, numberize_dict):
     # will return a new field in pandas dataframe with the field name + _CDE
     df[outFieldName + '_CDE'] = df[field]
     df[outFieldName + '_CDE'].replace(numberize_dict, inplace= True)
+    pd.to_numeric(df[outFieldName + '_CDE'], errors= 'ignore')
     
 
 #Data Source: https://geohub.lio.gov.on.ca/datasets/mnrf::ontario-road-network-orn-road-net-element
@@ -68,6 +69,7 @@ add_rng_base = add_rng_df[['ORN_ROAD_NET_ELEMENT_ID',
                             field_prefix + '_EVENT_ID',
                             'STREET_SIDE',
                             'HOUSE_NUMBER_STRUCTURE']].drop_duplicates(subset=['ORN_ROAD_NET_ELEMENT_ID'],  keep='first') # Base for adding L/R attributes to the table
+#Add join for parsed street name table here
 print('Calculating Address Range data')
 for row in add_rng_df.itertuples():
     index = add_rng_base.ORN_ROAD_NET_ELEMENT_ID[add_rng_base.ORN_ROAD_NET_ELEMENT_ID == row.ORN_ROAD_NET_ELEMENT_ID].index.tolist()[0]
@@ -98,7 +100,7 @@ for row in add_rng_df.itertuples():
 #Merge the Address Range data to the roads data beofre looping other tables 
 roads_df = roads_df.merge(add_rng_base, how= 'left', left_on='OGF_ID', right_on= 'ORN_ROAD_NET_ELEMENT_ID')
 roads_df = roads_df.drop(['OBJECTID', 'ORN_ROAD_NET_ELEMENT_ID', 'HOUSE_NUMBER_STRUCTURE', 
-                        'LENGTH', 'SHAPE','STREET_SIDE', 'FROM_JUNCTION_ID', 'TO_JUNCTION_ID'], axis=1)
+                        'LENGTH','STREET_SIDE', 'FROM_JUNCTION_ID', 'TO_JUNCTION_ID'], axis=1)
 
 print('Adding non address data to table')
 for table in tables: #Loop for line tables
@@ -110,7 +112,7 @@ for table in tables: #Loop for line tables
                                                                                                         'EFFECTIVE_DATETIME', 
                                                                                                         'EXPIRY_DATETIME', 
                                                                                                         'OFFICIAL_LANGUAGE'], axis=1)
-        table = table.merge(StrNme_df, how='left', left_on='FULL_STREET_NAME', right_on= 'FULL_STREET_NAME')
+        tbl_df = tbl_df.merge(StrNme_df, how='left', left_on='FULL_STREET_NAME', right_on= 'FULL_STREET_NAME')
 
     tbl_df = tbl_df.drop(['OBJECTID'], axis=1)
     #Rename Table fields
@@ -166,11 +168,11 @@ NumberizeField(roads_df, 'ROAD_CLASS', 'ROAD_CLASS', {'Freeway' : 1,
                                                     'Local / Street' : 5,
                                                     'Local / Strata' : 6,
                                                     'Local / Unknown' : 7,
-                                                    'Alleyway / Lane' : 8,
+                                                    'Alleyway / Laneway' : 8,
                                                     'Ramp' : 9,
                                                     'Resource / Recreation' : 10,
                                                     'Rapid Transit' : 11,
-                                                    'Service Lane' : 12,
+                                                    'Service' : 12,
                                                     'Winter' : 13})   
 
 NumberizeField(roads_df, 'STRUCTURE_TYPE', 'STRUCTURE_TYPE', {'None' : 0,
@@ -203,7 +205,9 @@ NumberizeField(roads_df, 'SURFACE_TYPE', 'PAVED_SURFACE_TYPE', {'Unknown' : -1,
 
 
 
-for f in roads_df.columns: print(f)
+print(roads_df.columns.tolist())
+#pd.set_option('display.max_rows', 77)
+final_field_order = ['OGF_ID' , 'ROAD_ABSOLUTE_ACCURACY']
 sys.exit()
 #Export the complete roads df
 print('Exporting compiled dataset.')
