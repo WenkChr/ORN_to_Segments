@@ -105,6 +105,13 @@ for table in tables: #Loop for line tables
     field_prefix = table[4:]
     print(f'Running segmentification on: {table}')
     tbl_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, table))
+    if table == 'ORN_ALTERNATE_STREET_NAME': # If table is alternate street name join the 'ORN_STREET_NAME_PARSED' table to it for the directional prefix data
+        StrNme_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, 'ORN_STREET_NAME_PARSED')).drop(['OBJECTID', 
+                                                                                                        'EFFECTIVE_DATETIME', 
+                                                                                                        'EXPIRY_DATETIME', 
+                                                                                                        'OFFICIAL_LANGUAGE'], axis=1)
+        table = table.merge(StrNme_df, how='left', left_on='FULL_STREET_NAME', right_on= 'FULL_STREET_NAME')
+
     tbl_df = tbl_df.drop(['OBJECTID'], axis=1)
     #Rename Table fields
     tbl_df.rename(columns={'AGENCY_NAME' : field_prefix + '_AGENCY', 
@@ -137,48 +144,64 @@ for table in tables: #Loop for line tables
 #Add street name parsed fields
 
 # Encode certain fields from the loop
-NumberizeField(roads_df, 'ACQUISITION_TECHNIQUE', {'UNKNKOWN' : -1,
-                                                'NONE' : 0,
-                                                'OTHER' : 1,
-                                                'GPS' : 2,
-                                                'ORTHOIMAGE' : 3,
-                                                'ORTHOPHOTO' : 4,
-                                                'VECTOR DATA' : 5,
-                                                'PAPER MAP' : 6,
-                                                'FIELD COMPLETION' : 7,
-                                                'RASTER DATA' : 8,
-                                                'DIGITAL ELEVATION MODEL' : 9,
-                                                'AERIAL PHOTO' : 10,
-                                                'RAW IMAGERY DATA' : 11,
-                                                'COMPUTED' : 12})
+NumberizeField(roads_df, 'ACQUISITION_TECHNIQUE', 'ACQUISITION_TECHNIQUE', {'UNKNKOWN' : -1,
+                                                                        'NONE' : 0,
+                                                                        'OTHER' : 1,
+                                                                        'GPS' : 2,
+                                                                        'ORTHOIMAGE' : 3,
+                                                                        'ORTHOPHOTO' : 4,
+                                                                        'VECTOR DATA' : 5,
+                                                                        'PAPER MAP' : 6,
+                                                                        'FIELD COMPLETION' : 7,
+                                                                        'RASTER DATA' : 8,
+                                                                        'DIGITAL ELEVATION MODEL' : 9,
+                                                                        'AERIAL PHOTO' : 10,
+                                                                        'RAW IMAGERY DATA' : 11,
+                                                                        'COMPUTED' : 12})
 
-NumberizeField(roads_df, 'ROAD_CLASS', {'Freeway' : 1, 
-                                        'Expressway / Highway' : 2, 
-                                        'Arterial' : 3, 
-                                        'Collector' : 4,
-                                        'Local / Street' : 5,
-                                        'Local / Strata' : 6,
-                                        'Local / Unknown' : 7,
-                                        'Alleyway / Lane' : 8,
-                                        'Ramp' : 9,
-                                        'Resource / Recreation' : 10,
-                                        'Rapid Transit' : 11,
-                                        'Service Lane' : 12,
-                                        'Winter' : 13})   
+NumberizeField(roads_df, 'ROAD_CLASS', 'ROAD_CLASS', {'Freeway' : 1, 
+                                                    'Expressway / Highway' : 2, 
+                                                    'Arterial' : 3, 
+                                                    'Collector' : 4,
+                                                    'Local / Street' : 5,
+                                                    'Local / Strata' : 6,
+                                                    'Local / Unknown' : 7,
+                                                    'Alleyway / Lane' : 8,
+                                                    'Ramp' : 9,
+                                                    'Resource / Recreation' : 10,
+                                                    'Rapid Transit' : 11,
+                                                    'Service Lane' : 12,
+                                                    'Winter' : 13})   
 
-NumberizeField(roads_df, 'STRUCTURE_TYPE', {'None' : 0,
-                                            'Bridge' : 1,
-                                            'Bridge Covered' : 2,
-                                            'Bridge Moveable' : 3,
-                                            'Tunnel'  : 5,
-                                            'Dam' : 7})
+NumberizeField(roads_df, 'STRUCTURE_TYPE', 'STRUCTURE_TYPE', {'None' : 0,
+                                                            'Bridge' : 1,
+                                                            'Bridge Covered' : 2,
+                                                            'Bridge Moveable' : 3,
+                                                            'Tunnel'  : 5,
+                                                            'Dam' : 7})
 
-NumberizeField(roads_df, 'DIRECTION_OF_TRAFFIC_FLOW', {'Unknown' : -1, 
-                                                    'Both' : 1,
-                                                    'Positive' : 2, # 'Positive' - flow of traffic same as digitizing direction (Same Direction)
-                                                    'Negative' : 3 # 'Negative' - flow of traffic different from digitizing direction (Opposite Direction)
-                                                    }) 
-NumberizeField(roads_df, 'SURFACE_TYPE', {'Dirt' : })
+NumberizeField(roads_df, 'DIRECTION_OF_TRAFFIC_FLOW', 'DIRECTION_OF_TRAFFIC_FLOW', 
+                                                        {'Unknown' : -1, 
+                                                        'Both' : 1,
+                                                        'Positive' : 2, # 'Positive' - flow of traffic same as digitizing direction (Same Direction)
+                                                        'Negative' : 3 # 'Negative' - flow of traffic different from digitizing direction (Opposite Direction)
+                                                        })
+
+NumberizeField(roads_df, 'PAVEMENT_STATUS', 'PAVEMENT_STATUS', {'Paved' : 1, 'Unpaved' : 2})
+
+NumberizeField(roads_df, 'SURFACE_TYPE', 'UNPAVED_SURFACE_TYPE', {'Unknown' : -1,
+                                                                'None' : 0,
+                                                                'Gravel' : 1,
+                                                                'Dirt' : 2})
+
+NumberizeField(roads_df, 'SURFACE_TYPE', 'PAVED_SURFACE_TYPE', {'Unknown' : -1, 
+                                                                'None' : 0,
+                                                                'Rigid' : 1, # Rigid = Summer (Same def between docs)
+                                                                'Flexible' : 2, # Flexible = Winter (Same def between docs)
+                                                                'Blocks' : 3
+                                                                })
+
+
 
 for f in roads_df.columns: print(f)
 sys.exit()
