@@ -244,4 +244,15 @@ final_field_order = []
 print('Exporting compiled dataset.')
 roads_df.spatial.to_featureclass(os.path.join(directory, 'files_for_delivery.gdb', 'test_fc'), overwrite= True)
 
+#Toll Points field encoding
+tp_df = pd.DataFrame.spatial.from_featureclass(os.path.join(workingGDB, 'ORN_Toll_Points')) # ORN_Toll_Points created in QGIS with the linear referencing plugin
+tp_df = tp_df.drop(['EVENT_ID', 'AT_MEASURE', 'lrs_err'], axis=1)
+NumberizeField(tp_df, 'TOLL_POINT', 'TOLL_PNT_TYP', {'Unknown' :-1, 'Physical' : 1, 'Virtual' : 2, 'Hybrid' : 3})
+tp_df.spatial.to_featureclass(os.path.join(directory, 'files_for_delivery.gdb', 'ORN_toll_booths'), overwrite= True)
+
+#Blocked Passages field encoding
+bp_df = pd.DataFrame.spatial.from_featureclass(os.path.join(workingGDB, 'ORN_BLocked_Passages'))
+bp_df = bp_df.drop(['EVENT_ID', 'AT_MEASURE', 'lrs_err'], axis=1)
+NumberizeField(bp_df, 'BLOCKED_PA', 'BLKD_PASS_TYP', {'Unknown' : -1, 'Permanent' : 1, 'Removable' : 2})
+bp_df.spatial.to_featureclass(os.path.join(directory, 'files_for_delivery.gdb', 'ORN_blocked_passages'), overwrite= True)
 print('DONE!')
