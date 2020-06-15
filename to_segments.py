@@ -69,7 +69,11 @@ add_rng_base = add_rng_df[['ORN_ROAD_NET_ELEMENT_ID',
                             field_prefix + '_EVENT_ID',
                             'STREET_SIDE',
                             'HOUSE_NUMBER_STRUCTURE']].drop_duplicates(subset=['ORN_ROAD_NET_ELEMENT_ID'],  keep='first') # Base for adding L/R attributes to the table
-#Add join for parsed street name table here
+
+str_nme_parsed_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, 'ORN_STREET_NAME_PARSED')) # ORN_STREET_NAME_PARSED table as a df
+
+add_rng_df = add_rng_df.merge(str_nme_parsed_df, how= 'left', left_on='FULL_STREET_NAME', right_on= 'FULL_STREET_NAME')
+
 print('Calculating Address Range data')
 for row in add_rng_df.itertuples():
     index = add_rng_base.ORN_ROAD_NET_ELEMENT_ID[add_rng_base.ORN_ROAD_NET_ELEMENT_ID == row.ORN_ROAD_NET_ELEMENT_ID].index.tolist()[0]
@@ -80,12 +84,24 @@ for row in add_rng_df.itertuples():
         add_rng_base.at[index, 'L_FIRST_HOUSE_NUM'] = row.FIRST_HOUSE_NUMBER
         add_rng_base.at[index, 'L_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
         add_rng_base.at[index, 'L_FULL_STREET_NAME'] = row.FULL_STREET_NAME
+        #STREET NAME PARSED data
+        add_rng_base.at[index, 'L_STR_TYP_PRE'] = row.STREET_TYPE_PREFIX
+        add_rng_base.at[index, 'L_STR_NME_BDY'] = row.STREET_NAME_BODY
+        add_rng_base.at[index, 'L_STR_TYP_SUF'] = row.STREET_TYPE_SUFFIX
+        add_rng_base.at[index, 'L_STR_TYP_PRE'] = row.STREET_TYPE_PREFIX
+        add_rng_base.at[index, 'L_DIR_SUF'] = row.DIRECTIONAL_SUFFIX
 
     if row.STREET_SIDE == 'Right':
         add_rng_base.at[index, 'R_HOUSE_NUMBER_STRUCTURE_CDE'] = Structure_CDE[row.HOUSE_NUMBER_STRUCTURE]
         add_rng_base.at[index, 'R_FIRST_HOUSE_NUM'] = row.FIRST_HOUSE_NUMBER
         add_rng_base.at[index, 'R_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
         add_rng_base.at[index, 'R_FULL_STREET_NAME'] = row.FULL_STREET_NAME
+        #STREET NAME PARSED data
+        add_rng_base.at[index, 'R_STR_TYP_PRE'] = row.STREET_TYPE_PREFIX
+        add_rng_base.at[index, 'R_STR_NME_BDY'] = row.STREET_NAME_BODY
+        add_rng_base.at[index, 'R_STR_TYP_SUF'] = row.STREET_TYPE_SUFFIX
+        add_rng_base.at[index, 'R_STR_TYP_PRE'] = row.STREET_TYPE_PREFIX
+        add_rng_base.at[index, 'R_DIR_SUF'] = row.DIRECTIONAL_SUFFIX
 
     if row.STREET_SIDE == 'Both':
         add_rng_base.at[index, 'L_HOUSE_NUMBER_STRUCTURE_CDE'] = Structure_CDE[row.HOUSE_NUMBER_STRUCTURE]
@@ -96,6 +112,17 @@ for row in add_rng_df.itertuples():
         add_rng_base.at[index, 'R_LAST_HOUSE_NUM'] = row.LAST_HOUSE_NUMBER
         add_rng_base.at[index, 'L_FULL_STREET_NAME'] = row.FULL_STREET_NAME
         add_rng_base.at[index, 'R_FULL_STREET_NAME'] = row.FULL_STREET_NAME
+        #STREET NAME PARSED data
+        add_rng_base.at[index, 'L_STR_TYP_PRE'] = row.STREET_TYPE_PREFIX
+        add_rng_base.at[index, 'L_STR_NME_BDY'] = row.STREET_NAME_BODY
+        add_rng_base.at[index, 'L_STR_TYP_SUF'] = row.STREET_TYPE_SUFFIX
+        add_rng_base.at[index, 'L_STR_TYP_PRE'] = row.STREET_TYPE_PREFIX
+        add_rng_base.at[index, 'L_DIR_SUF'] = row.DIRECTIONAL_SUFFIX
+        add_rng_base.at[index, 'R_STR_TYP_PRE'] = row.STREET_TYPE_PREFIX
+        add_rng_base.at[index, 'R_STR_NME_BDY'] = row.STREET_NAME_BODY
+        add_rng_base.at[index, 'R_STR_TYP_SUF'] = row.STREET_TYPE_SUFFIX
+        add_rng_base.at[index, 'R_STR_TYP_PRE'] = row.STREET_TYPE_PREFIX
+        add_rng_base.at[index, 'R_DIR_SUF'] = row.DIRECTIONAL_SUFFIX
 
 #Merge the Address Range data to the roads data beofre looping other tables 
 roads_df = roads_df.merge(add_rng_base, how= 'left', left_on='OGF_ID', right_on= 'ORN_ROAD_NET_ELEMENT_ID')
@@ -107,12 +134,12 @@ for table in tables: #Loop for line tables
     field_prefix = table[4:]
     print(f'Running segmentification on: {table}')
     tbl_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, table))
-    if table == 'ORN_ALTERNATE_STREET_NAME': # If table is alternate street name join the 'ORN_STREET_NAME_PARSED' table to it for the directional prefix data
-        StrNme_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, 'ORN_STREET_NAME_PARSED')).drop(['OBJECTID', 
-                                                                                                        'EFFECTIVE_DATETIME', 
-                                                                                                        'EXPIRY_DATETIME', 
-                                                                                                        'OFFICIAL_LANGUAGE'], axis=1)
-        tbl_df = tbl_df.merge(StrNme_df, how='left', left_on='FULL_STREET_NAME', right_on= 'FULL_STREET_NAME')
+    # if table == 'ORN_ALTERNATE_STREET_NAME': # If table is alternate street name join the 'ORN_STREET_NAME_PARSED' table to it for the directional prefix data
+    #     StrNme_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, 'ORN_STREET_NAME_PARSED')).drop(['OBJECTID', 
+    #                                                                                                     'EFFECTIVE_DATETIME', 
+    #                                                                                                     'EXPIRY_DATETIME', 
+    #                                                                                                     'OFFICIAL_LANGUAGE'], axis=1)
+    #     tbl_df = tbl_df.merge(StrNme_df, how='left', left_on='FULL_STREET_NAME', right_on= 'FULL_STREET_NAME')
 
     tbl_df = tbl_df.drop(['OBJECTID'], axis=1)
     #Rename Table fields
@@ -207,7 +234,21 @@ NumberizeField(roads_df, 'SURFACE_TYPE', 'PAVED_SURFACE_TYPE', {'Unknown' : -1,
 
 print(roads_df.columns.tolist())
 #pd.set_option('display.max_rows', 77)
-final_field_order = ['OGF_ID' , 'ROAD_ABSOLUTE_ACCURACY']
+final_field_order = ['OGF_ID', 'ROAD_ABSOLUTE_ACCURACY', 'NATIONAL_UUID', 'DIRECTION_OF_TRAFFIC_FLOW', 'EXIT_NUMBER',
+ 'ROAD_ELEMENT_TYPE', 'TOLL_ROAD_IND', 'ACQUISITION_TECHNIQUE', 'CREATION_DATE', 'REVISION_DATE', 'GEOMETRY_UPDATE_DATETIME', 
+ 'EFFECTIVE_DATETIME', 'SHAPE', 'ADDRESS_INFO_AGENCY', 'ADDRESS_INFO_EFF_DATE', 'ADDRESS_INFO_EVENT_ID', 'L_HOUSE_NUMBER_STRUCTURE_CDE', 
+ 'L_FIRST_HOUSE_NUM', 'L_LAST_HOUSE_NUM', 'L_FULL_STREET_NAME', 'R_HOUSE_NUMBER_STRUCTURE_CDE', 'R_FIRST_HOUSE_NUM', 'R_LAST_HOUSE_NUM', 
+ 'R_FULL_STREET_NAME', 'ALTERNATE_STREET_NAME_FULL_STREET_NAME', 'ALTERNATE_STREET_NAME_AGENCY', 'ALTERNATE_STREET_NAME_EFF_DATE', 
+ 'DIRECTIONAL_PREFIX', 'STREET_TYPE_PREFIX', 'STREET_NAME_BODY', 'STREET_TYPE_SUFFIX', 'DIRECTIONAL_SUFFIX', 'ABBREVIATED_STREET_NAME', 
+ 'PAVEMENT_STATUS', 'SURFACE_TYPE', 'ROAD_SURFACE_AGENCY', 'ROAD_SURFACE_EFF_DATE', 'ROUTE_NAME_ENGLISH', 'ROUTE_NAME_FRENCH', 
+ 'ROUTE_NAME_AGENCY', 'ROUTE_NAME_EFF_DATE', 'ROUTE_NUMBER', 'SHIELD_TYPE', 'ROUTE_NUMBER_AGENCY', 'ROUTE_NUMBER_EFF_DATE', 'SPEED_LIMIT', 
+ 'SPEED_LIMIT_AGENCY', 'SPEED_LIMIT_EFF_DATE', 'STRUCTURE_TYPE', 'STRUCTURE_NAME_ENGLISH', 'STRUCTURE_NAME_FRENCH', 'STRUCTURE_AGENCY', 
+ 'STRUCTURE_NAT_UUID', 'STRUCTURE_EFF_DATE', 'JURISDICTION_STREET_SIDE', 'JURISDICTION', 'JURISDICTION_AGENCY', 'JURISDICTION_EFF_DATE', 
+ 'NUMBER_OF_LANES', 'NUMBER_OF_LANES_AGENCY', 'NUMBER_OF_LANES_EFF_DATE', 'OFFICIAL_STREET_NAME_FULL_STREET_NAME', 'OFFICIAL_STREET_NAME_AGENCY', 
+ 'OFFICIAL_STREET_NAME_EFF_DATE', 'ROAD_CLASS', 'ROAD_CLASS_AGENCY', 'ROAD_CLASS_EFF_DATE', 'ROAD_NET_ELEMENT_SOURCE_AGENCY', 'EXTERNAL_IDENT', 
+ 'ROAD_NET_ELEMENT_SOURCE_EFF_DATE', 'ACQUISITION_TECHNIQUE_CDE', 'ROAD_CLASS_CDE', 'STRUCTURE_TYPE_CDE', 'DIRECTION_OF_TRAFFIC_FLOW_CDE', 
+ 'PAVEMENT_STATUS_CDE', 'UNPAVED_SURFACE_TYPE_CDE', 'PAVED_SURFACE_TYPE_CDE']
+
 sys.exit()
 #Export the complete roads df
 print('Exporting compiled dataset.')
