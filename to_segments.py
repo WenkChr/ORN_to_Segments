@@ -34,7 +34,8 @@ directory = os.getcwd()
 ORN_GDB = os.path.join(directory, 'Non_Sensitive.gdb')
 workingGDB = os.path.join(directory, 'workingGDB.gdb')
 outGDB = os.path.join(directory, 'files_for_delivery.gdb') 
-road_ele_data = os.path.join(workingGDB, 'ORN_net_element_tester')
+road_ele_data = os.path.join(ORN_GDB, 'ORN_ROAD_NET_ELEMENT') # Full road dataset
+# road_ele_data = os.path.join(workingGDB, 'ORN_net_element_tester') #Test area road dataset
 
 #----------------------------------------------------------------------------------------------------------------
 # Main script
@@ -52,6 +53,8 @@ if 'ORN_JUNCTION' in tables:
     tables.remove('ORN_UNDERPASS')
     tables.remove('ORN_STREET_NAME_PARSED')
     tables.remove('ORN_ADDRESS_INFO')
+    tables.remove('ORN_ROUTE_NAME')
+    tables.remove('ORN_ROUTE_NUMBER')
 
 #Make Address Ranges on L/R
 add_rng_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, 'ORN_ADDRESS_INFO')) # get full dataset
@@ -134,13 +137,6 @@ for table in tables: #Loop for line tables
     field_prefix = table[4:]
     print(f'Running segmentification on: {table}')
     tbl_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, table))
-    # if table == 'ORN_ALTERNATE_STREET_NAME': # If table is alternate street name join the 'ORN_STREET_NAME_PARSED' table to it for the directional prefix data
-    #     StrNme_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, 'ORN_STREET_NAME_PARSED')).drop(['OBJECTID', 
-    #                                                                                                     'EFFECTIVE_DATETIME', 
-    #                                                                                                     'EXPIRY_DATETIME', 
-    #                                                                                                     'OFFICIAL_LANGUAGE'], axis=1)
-    #     tbl_df = tbl_df.merge(StrNme_df, how='left', left_on='FULL_STREET_NAME', right_on= 'FULL_STREET_NAME')
-
     tbl_df = tbl_df.drop(['OBJECTID'], axis=1)
     #Rename Table fields
     tbl_df.rename(columns={'AGENCY_NAME' : field_prefix + '_AGENCY', 
@@ -169,9 +165,29 @@ for table in tables: #Loop for line tables
                         'ORN_ROAD_NET_ELEMENT_ID'],
                          axis=1) # Removes non-essential fields
     roads_df = merged
+print('Creating route name and number multi fields')
+#Route Name and Number Multifields
+for table in ['ORN_ROUTE_NUMBER', 'ORN_ROUTE_NAME']:
+    field_prefix = table[4:]
+    print(f'Running segmentification on: {table}')
+    tbl_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, table))
+    tbl_df = tbl_df.drop(['OBJECTID', 'EVENT_ID', 'AGENCY_NAME'], axis=1) # Drop some excess fields
+    print(f'iterating over matches for the ORN_NET_ID in {table}')
+    for row in roads_df.itertuples():
+        ogf_id = row.OGF_ID
+        matched_df = tbl_df.loc[tbl_df['ORN_ROAD_NET_ELEMENT_ID'] == ogf_id] # df of compiled matches
+        for match_row in matched_df.itertuples():
+            fields_to_extract = {'ORN_ROUTE_NUMBER' : ['ROUTE_NUMBER'], 'ORN_ROUTE_NAME' : ['ROUTE_NAME_ENGLISH', 'ROUTE_NAME_FRENCH']}
+            count = 1           
+            if table == 'ORN_ROUTE_NUMBER':
+                roads_df[f'ROUTE_NUMBER_{count}'] = matched_df.ROUTE_NUMBER
+                count += 1            
+            if table == 'ORN_ROUTE_NAME':
+                roads_df[f'ROUTE_NAME_ENGLISH_{count}'] = row.ROUTE_NAME_ENGLISH
+                roads_df[f'ROUTE_NAME_FRENCH_{count}'] = row.ROUTE_NAME_FRENCH
+                count += 1
 
-#Add street name parsed fields
-
+print('Encoding select fields from strings into NRN numeric codes')
 # Encode certain fields from the loop
 NumberizeField(roads_df, 'ACQUISITION_TECHNIQUE', 'ACQUISITION_TECHNIQUE', {'UNKNOWN' : -1,
                                                                         'NONE' : 0,
@@ -230,6 +246,7 @@ NumberizeField(roads_df, 'SURFACE_TYPE', 'PAVED_SURFACE_TYPE', {'Unknown' : -1,
                                                                 'Blocks' : 3
                                                                 })
 
+# Directional prefix and suffix encoding
 direction_cde = {'None' : 0, 'North' : 1, 'Nord' : 2, 'South' : 3, 'Sud' : 4, 'East' : 5, 'Est' : 6, 'West' : 7, 'Ouest' : 8, 'North West' : 9,
             'Nord Ouest' : 10, 'North East' : 11, 'Nord Est' : 12, 'South West' :13, 'Sud Ouest' : 14, 'South East' : 15, 'Sud Est' : 16, 
             'Central' : 17, 'Centre' : 18}
