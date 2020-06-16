@@ -12,8 +12,8 @@ def unique_values(fc, field):
 
 def NumberizeField(df, field, outFieldName, numberize_dict):
     # will return a new field in pandas dataframe with the field name + _CDE
-    df[outFieldName + '_CDE'] = df[field]
-    df[outFieldName + '_CDE'].replace(numberize_dict, inplace= True)
+    df.insert(df.columns.get_loc(field) + 1, outFieldName + '_CDE', df[field])
+    df[outFieldName + '_CDE'] = df[field].map(numberize_dict)
     pd.to_numeric(df[outFieldName + '_CDE'], errors= 'ignore')
     
 
@@ -173,7 +173,7 @@ for table in tables: #Loop for line tables
 #Add street name parsed fields
 
 # Encode certain fields from the loop
-NumberizeField(roads_df, 'ACQUISITION_TECHNIQUE', 'ACQUISITION_TECHNIQUE', {'UNKNKOWN' : -1,
+NumberizeField(roads_df, 'ACQUISITION_TECHNIQUE', 'ACQUISITION_TECHNIQUE', {'UNKNOWN' : -1,
                                                                         'NONE' : 0,
                                                                         'OTHER' : 1,
                                                                         'GPS' : 2,
@@ -233,9 +233,9 @@ NumberizeField(roads_df, 'SURFACE_TYPE', 'PAVED_SURFACE_TYPE', {'Unknown' : -1,
 direction_cde = {'None' : 0, 'North' : 1, 'Nord' : 2, 'South' : 3, 'Sud' : 4, 'East' : 5, 'Est' : 6, 'West' : 7, 'Ouest' : 8, 'North West' : 9,
             'Nord Ouest' : 10, 'North East' : 11, 'Nord Est' : 12, 'South West' :13, 'Sud Ouest' : 14, 'South East' : 15, 'Sud Est' : 16, 
             'Central' : 17, 'Centre' : 18}
-for dir_f in ['L_DIR_PRE', 'L_DIR_SUF']:
-    NumberizeField(roads_df, dir_f, dir_f, direction_cde)
 
+NumberizeField(roads_df, 'L_DIR_PRE', 'L_DIR_PRE', direction_cde)
+NumberizeField(roads_df, 'L_DIR_SUF', 'L_DIR_SUF', direction_cde)
 
 #print(roads_df.columns.tolist())
 #pd.set_option('display.max_rows', 77)
