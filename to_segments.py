@@ -34,8 +34,8 @@ directory = os.getcwd()
 ORN_GDB = os.path.join(directory, 'Non_Sensitive.gdb')
 workingGDB = os.path.join(directory, 'workingGDB.gdb')
 outGDB = os.path.join(directory, 'files_for_delivery.gdb') 
-road_ele_data = os.path.join(ORN_GDB, 'ORN_ROAD_NET_ELEMENT') # Full road dataset
-# road_ele_data = os.path.join(workingGDB, 'ORN_net_element_tester') #Test area road dataset
+#road_ele_data = os.path.join(ORN_GDB, 'ORN_ROAD_NET_ELEMENT') # Full road dataset
+road_ele_data = os.path.join(workingGDB, 'ORN_net_element_tester') #Test area road dataset
 
 #----------------------------------------------------------------------------------------------------------------
 # Main script
@@ -45,16 +45,9 @@ tables = arcpy.ListTables()
 print('Reading road data into spatial dataframe')
 roads_df = pd.DataFrame.spatial.from_featureclass(road_ele_data, dtypes= {'OGF_ID': 'int', 'FROM_JUNCTION_ID':'int', 'TO_JUNCTION_ID': 'int'}) 
 OGF_IDS = roads_df.OGF_ID.unique()
-# Remove ORN_JUNCTION because it is not applicable 
-if 'ORN_JUNCTION' in tables:
-    tables.remove('ORN_JUNCTION')
-    tables.remove('ORN_BLOCKED_PASSAGE')
-    tables.remove('ORN_TOLL_POINT')
-    tables.remove('ORN_UNDERPASS')
-    tables.remove('ORN_STREET_NAME_PARSED')
-    tables.remove('ORN_ADDRESS_INFO')
-    tables.remove('ORN_ROUTE_NAME')
-    tables.remove('ORN_ROUTE_NUMBER')
+# Remove tables that require specific treatment 
+for tbl in ['ORN_JUNCTION', 'ORN_BLOCKED_PASSAGE', 'ORN_TOLL_POINT', 'ORN_UNDERPASS', 'ORN_STREET_NAME_PARSED', 'ORN_ADDRESS_INFO', 'ORN_ROUTE_NAME', 'ORN_ROUTE_NUMBER', 'ORN_OFFICIAL_STREET_NAME']:
+    tables.remove(tbl)
 
 #Make Address Ranges on L/R
 add_rng_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, 'ORN_ADDRESS_INFO')) # get full dataset
@@ -73,10 +66,11 @@ add_rng_base = add_rng_df[['ORN_ROAD_NET_ELEMENT_ID',
                             'STREET_SIDE',
                             'HOUSE_NUMBER_STRUCTURE']].drop_duplicates(subset=['ORN_ROAD_NET_ELEMENT_ID'],  keep='first') # Base for adding L/R attributes to the table
 
+#Merger of street nme table
 str_nme_parsed_df = pd.DataFrame.spatial.from_table(os.path.join(ORN_GDB, 'ORN_STREET_NAME_PARSED')) # ORN_STREET_NAME_PARSED table as a df
-
 add_rng_df = add_rng_df.merge(str_nme_parsed_df, how= 'left', left_on='FULL_STREET_NAME', right_on= 'FULL_STREET_NAME')
 
+#Loop to add address info to roads df
 print('Calculating Address Range data')
 for row in add_rng_df.itertuples():
     index = add_rng_base.ORN_ROAD_NET_ELEMENT_ID[add_rng_base.ORN_ROAD_NET_ELEMENT_ID == row.ORN_ROAD_NET_ELEMENT_ID].index.tolist()[0]
@@ -254,12 +248,33 @@ direction_cde = {'None' : 0, 'North' : 1, 'Nord' : 2, 'South' : 3, 'Sud' : 4, 'E
 NumberizeField(roads_df, 'L_DIR_PRE', 'L_DIR_PRE', direction_cde)
 NumberizeField(roads_df, 'L_DIR_SUF', 'L_DIR_SUF', direction_cde)
 
-#print(roads_df.columns.tolist())
+print(roads_df.columns.tolist())
 #pd.set_option('display.max_rows', 77)
-final_field_order = []
+final_field_order = ['OGF_ID', 'NATIONAL_UUID', 'ROAD_ELEMENT_TYPE', 'ACQUISITION_TECHNIQUE', 'ACQUISITION_TECHNIQUE_CDE', 'CREATION_DATE', 
+'REVISION_DATE', 'EXIT_NUMBER', 'L_FIRST_HOUSE_NUM', 'R_FIRST_HOUSE_NUM', 'L_HOUSE_NUMBER_STRUCTURE_CDE', 'R_HOUSE_NUMBER_STRUCTURE_CDE', 
+'L_LAST_HOUSE_NUM', 'R_LAST_HOUSE_NUM', 'ROAD_CLASS', 'ROAD_CLASS_CDE', 'NUMBER_OF_LANES', 'L_FULL_STREET_NAME', 'R_FULL_STREET_NAME', 
+'ALTERNATE_STREET_NAME_FULL_STREET_NAME', 'ALTERNATE_STREET_NAME_EFF_DATE', 'SURFACE_TYPE', 'PAVED_SURFACE_TYPE_CDE', 'PAVEMENT_STATUS', 
+'PAVEMENT_STATUS_CDE', 'JURISDICTION', 'JURISDICTION_AGENCY', 'ROUTE_NAME_ENGLISH_1', 'ROUTE_NAME_FRENCH_1', 'ROUTE_NUMBER_1', 'SPEED_LIMIT', 
+'STRUCTURE_NAME_ENGLISH', 'STRUCTURE_NAME_FRENCH', 'STRUCTURE_TYPE', 'STRUCTURE_TYPE_CDE', 'DIRECTION_OF_TRAFFIC_FLOW', 
+'DIRECTION_OF_TRAFFIC_FLOW_CDE', 'UNPAVED_SURFACE_TYPE_CDE']
+
+
+cut = [ 'ROAD_ABSOLUTE_ACCURACY' ,'TOLL_ROAD_IND',  
+'GEOMETRY_UPDATE_DATETIME', 'EFFECTIVE_DATETIME', 'SHAPE', 'ADDRESS_INFO_AGENCY', 'ADDRESS_INFO_EFF_DATE', 'ADDRESS_INFO_EVENT_ID', 
+'L_DIR_PRE', 'L_DIR_PRE_CDE', 'L_STR_TYP_PRE', 
+'L_STR_NME_BDY', 'L_STR_TYP_SUF', 'L_DIR_SUF', 'L_DIR_SUF_CDE', , 
+'R_DIR_PRE', 'R_STR_TYP_PRE', 'R_STR_NME_BDY', 'R_STR_TYP_SUF', 'R_DIR_SUF', , 
+'ALTERNATE_STREET_NAME_AGENCY',  
+'ROAD_SURFACE_AGENCY', 'ROAD_SURFACE_EFF_DATE',  'SPEED_LIMIT_AGENCY', 
+'SPEED_LIMIT_EFF_DATE',  'STRUCTURE_AGENCY', 
+'STRUCTURE_NAT_UUID', 'STRUCTURE_EFF_DATE', 'JURISDICTION_STREET_SIDE', ,  'JURISDICTION_EFF_DATE', 
+ 'NUMBER_OF_LANES_AGENCY', 'NUMBER_OF_LANES_EFF_DATE', 'OFFICIAL_STREET_NAME_FULL_STREET_NAME', 'OFFICIAL_STREET_NAME_AGENCY', 
+'OFFICIAL_STREET_NAME_EFF_DATE',  'ROAD_CLASS_AGENCY', 'ROAD_CLASS_EFF_DATE', 'ROAD_NET_ELEMENT_SOURCE_AGENCY', 
+'EXTERNAL_IDENT', 'ROAD_NET_ELEMENT_SOURCE_EFF_DATE']
+sys.exit()
 #Export the complete roads df
 print('Exporting compiled dataset.')
-roads_df.spatial.to_featureclass(os.path.join(directory, 'files_for_delivery.gdb', 'test_fc'), overwrite= True)
+roads_df.spatial.to_featureclass(os.path.join(directory, 'files_for_delivery.gdb', 'ORN_Road_Segments'), overwrite= True)
 
 #Toll Points field encoding
 tp_df = pd.DataFrame.spatial.from_featureclass(os.path.join(workingGDB, 'ORN_Toll_Points')) # ORN_Toll_Points created in QGIS with the linear referencing plugin
