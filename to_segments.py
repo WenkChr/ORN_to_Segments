@@ -183,8 +183,8 @@ for table in ['ORN_ROUTE_NUMBER', 'ORN_ROUTE_NAME']:
                 roads_df[f'ROUTE_NUMBER_{count}'] = matched_df.ROUTE_NUMBER
                 count += 1            
             if table == 'ORN_ROUTE_NAME':
-                roads_df[f'ROUTE_NAME_ENGLISH_{count}'] = row.ROUTE_NAME_ENGLISH
-                roads_df[f'ROUTE_NAME_FRENCH_{count}'] = row.ROUTE_NAME_FRENCH
+                roads_df[f'ROUTE_NAME_ENGLISH_{count}'] = matched_df.ROUTE_NAME_ENGLISH
+                roads_df[f'ROUTE_NAME_FRENCH_{count}'] = matched_df.ROUTE_NAME_FRENCH
                 count += 1
 
 print('Encoding select fields from strings into NRN numeric codes')
