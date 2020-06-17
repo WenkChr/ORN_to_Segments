@@ -34,8 +34,8 @@ directory = os.getcwd()
 ORN_GDB = os.path.join(directory, 'Non_Sensitive.gdb')
 workingGDB = os.path.join(directory, 'workingGDB.gdb')
 outGDB = os.path.join(directory, 'files_for_delivery.gdb') 
-#road_ele_data = os.path.join(ORN_GDB, 'ORN_ROAD_NET_ELEMENT') # Full road dataset
-road_ele_data = os.path.join(workingGDB, 'ORN_net_element_tester') #Test area road dataset
+road_ele_data = os.path.join(ORN_GDB, 'ORN_ROAD_NET_ELEMENT') # Full road dataset
+#road_ele_data = os.path.join(workingGDB, 'ORN_net_element_tester') #Test area road dataset
 
 #----------------------------------------------------------------------------------------------------------------
 # Main script
@@ -248,7 +248,7 @@ direction_cde = {'None' : 0, 'North' : 1, 'Nord' : 2, 'South' : 3, 'Sud' : 4, 'E
 NumberizeField(roads_df, 'L_DIR_PRE', 'L_DIR_PRE', direction_cde)
 NumberizeField(roads_df, 'L_DIR_SUF', 'L_DIR_SUF', direction_cde)
 
-print(roads_df.columns.tolist())
+#print(roads_df.columns.tolist())
 #pd.set_option('display.max_rows', 77)
 final_field_order = ['OGF_ID', 'NATIONAL_UUID', 'ROAD_ELEMENT_TYPE', 'ACQUISITION_TECHNIQUE', 'ACQUISITION_TECHNIQUE_CDE', 'CREATION_DATE', 
 'REVISION_DATE', 'EXIT_NUMBER', 'L_FIRST_HOUSE_NUM', 'R_FIRST_HOUSE_NUM', 'L_HOUSE_NUMBER_STRUCTURE_CDE', 'R_HOUSE_NUMBER_STRUCTURE_CDE', 
@@ -257,21 +257,18 @@ final_field_order = ['OGF_ID', 'NATIONAL_UUID', 'ROAD_ELEMENT_TYPE', 'ACQUISITIO
 'PAVEMENT_STATUS_CDE', 'JURISDICTION', 'JURISDICTION_AGENCY', 'ROUTE_NAME_ENGLISH_1', 'ROUTE_NAME_FRENCH_1', 'ROUTE_NUMBER_1', 'SPEED_LIMIT', 
 'STRUCTURE_NAME_ENGLISH', 'STRUCTURE_NAME_FRENCH', 'STRUCTURE_TYPE', 'STRUCTURE_TYPE_CDE', 'DIRECTION_OF_TRAFFIC_FLOW', 
 'DIRECTION_OF_TRAFFIC_FLOW_CDE', 'UNPAVED_SURFACE_TYPE_CDE']
-
-
+ 
 cut = [ 'ROAD_ABSOLUTE_ACCURACY' ,'TOLL_ROAD_IND',  
 'GEOMETRY_UPDATE_DATETIME', 'EFFECTIVE_DATETIME', 'SHAPE', 'ADDRESS_INFO_AGENCY', 'ADDRESS_INFO_EFF_DATE', 'ADDRESS_INFO_EVENT_ID', 
-'L_DIR_PRE', 'L_DIR_PRE_CDE', 'L_STR_TYP_PRE', 
-'L_STR_NME_BDY', 'L_STR_TYP_SUF', 'L_DIR_SUF', 'L_DIR_SUF_CDE', , 
-'R_DIR_PRE', 'R_STR_TYP_PRE', 'R_STR_NME_BDY', 'R_STR_TYP_SUF', 'R_DIR_SUF', , 
-'ALTERNATE_STREET_NAME_AGENCY',  
-'ROAD_SURFACE_AGENCY', 'ROAD_SURFACE_EFF_DATE',  'SPEED_LIMIT_AGENCY', 
-'SPEED_LIMIT_EFF_DATE',  'STRUCTURE_AGENCY', 
-'STRUCTURE_NAT_UUID', 'STRUCTURE_EFF_DATE', 'JURISDICTION_STREET_SIDE', ,  'JURISDICTION_EFF_DATE', 
- 'NUMBER_OF_LANES_AGENCY', 'NUMBER_OF_LANES_EFF_DATE', 'OFFICIAL_STREET_NAME_FULL_STREET_NAME', 'OFFICIAL_STREET_NAME_AGENCY', 
-'OFFICIAL_STREET_NAME_EFF_DATE',  'ROAD_CLASS_AGENCY', 'ROAD_CLASS_EFF_DATE', 'ROAD_NET_ELEMENT_SOURCE_AGENCY', 
+'L_DIR_PRE', 'L_DIR_PRE_CDE', 'L_STR_TYP_PRE', 'L_STR_NME_BDY', 'L_STR_TYP_SUF', 'L_DIR_SUF', 'L_DIR_SUF_CDE', 'R_DIR_PRE', 'R_STR_TYP_PRE',
+ 'R_STR_NME_BDY', 'R_STR_TYP_SUF', 'R_DIR_SUF','ALTERNATE_STREET_NAME_AGENCY', 'ROAD_SURFACE_AGENCY', 'ROAD_SURFACE_EFF_DATE', 
+ 'SPEED_LIMIT_AGENCY', 'SPEED_LIMIT_EFF_DATE',  'STRUCTURE_AGENCY', 'STRUCTURE_NAT_UUID', 'STRUCTURE_EFF_DATE', 'JURISDICTION_STREET_SIDE', 
+ 'JURISDICTION_EFF_DATE', 'NUMBER_OF_LANES_AGENCY', 'NUMBER_OF_LANES_EFF_DATE', 'OFFICIAL_STREET_NAME_FULL_STREET_NAME', 
+ 'OFFICIAL_STREET_NAME_AGENCY', 'OFFICIAL_STREET_NAME_EFF_DATE',  'ROAD_CLASS_AGENCY', 'ROAD_CLASS_EFF_DATE', 'ROAD_NET_ELEMENT_SOURCE_AGENCY', 
 'EXTERNAL_IDENT', 'ROAD_NET_ELEMENT_SOURCE_EFF_DATE']
-sys.exit()
+
+roads_df = roads_df[final_field_order]
+
 #Export the complete roads df
 print('Exporting compiled dataset.')
 roads_df.spatial.to_featureclass(os.path.join(directory, 'files_for_delivery.gdb', 'ORN_Road_Segments'), overwrite= True)
