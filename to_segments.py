@@ -248,24 +248,13 @@ direction_cde = {'None' : 0, 'North' : 1, 'Nord' : 2, 'South' : 3, 'Sud' : 4, 'E
 NumberizeField(roads_df, 'L_DIR_PRE', 'L_DIR_PRE', direction_cde)
 NumberizeField(roads_df, 'L_DIR_SUF', 'L_DIR_SUF', direction_cde)
 
-#print(roads_df.columns.tolist())
-#pd.set_option('display.max_rows', 77)
 final_field_order = ['OGF_ID', 'NATIONAL_UUID', 'ROAD_ELEMENT_TYPE', 'ACQUISITION_TECHNIQUE', 'ACQUISITION_TECHNIQUE_CDE', 'CREATION_DATE', 
 'REVISION_DATE', 'EXIT_NUMBER', 'L_FIRST_HOUSE_NUM', 'R_FIRST_HOUSE_NUM', 'L_HOUSE_NUMBER_STRUCTURE_CDE', 'R_HOUSE_NUMBER_STRUCTURE_CDE', 
 'L_LAST_HOUSE_NUM', 'R_LAST_HOUSE_NUM', 'ROAD_CLASS', 'ROAD_CLASS_CDE', 'NUMBER_OF_LANES', 'L_FULL_STREET_NAME', 'R_FULL_STREET_NAME', 
 'ALTERNATE_STREET_NAME_FULL_STREET_NAME', 'ALTERNATE_STREET_NAME_EFF_DATE', 'SURFACE_TYPE', 'PAVED_SURFACE_TYPE_CDE', 'PAVEMENT_STATUS', 
 'PAVEMENT_STATUS_CDE', 'JURISDICTION', 'JURISDICTION_AGENCY', 'ROUTE_NAME_ENGLISH_1', 'ROUTE_NAME_FRENCH_1', 'ROUTE_NUMBER_1', 'SPEED_LIMIT', 
 'STRUCTURE_NAME_ENGLISH', 'STRUCTURE_NAME_FRENCH', 'STRUCTURE_TYPE', 'STRUCTURE_TYPE_CDE', 'DIRECTION_OF_TRAFFIC_FLOW', 
-'DIRECTION_OF_TRAFFIC_FLOW_CDE', 'UNPAVED_SURFACE_TYPE_CDE']
- 
-cut = [ 'ROAD_ABSOLUTE_ACCURACY' ,'TOLL_ROAD_IND',  
-'GEOMETRY_UPDATE_DATETIME', 'EFFECTIVE_DATETIME', 'SHAPE', 'ADDRESS_INFO_AGENCY', 'ADDRESS_INFO_EFF_DATE', 'ADDRESS_INFO_EVENT_ID', 
-'L_DIR_PRE', 'L_DIR_PRE_CDE', 'L_STR_TYP_PRE', 'L_STR_NME_BDY', 'L_STR_TYP_SUF', 'L_DIR_SUF', 'L_DIR_SUF_CDE', 'R_DIR_PRE', 'R_STR_TYP_PRE',
- 'R_STR_NME_BDY', 'R_STR_TYP_SUF', 'R_DIR_SUF','ALTERNATE_STREET_NAME_AGENCY', 'ROAD_SURFACE_AGENCY', 'ROAD_SURFACE_EFF_DATE', 
- 'SPEED_LIMIT_AGENCY', 'SPEED_LIMIT_EFF_DATE',  'STRUCTURE_AGENCY', 'STRUCTURE_NAT_UUID', 'STRUCTURE_EFF_DATE', 'JURISDICTION_STREET_SIDE', 
- 'JURISDICTION_EFF_DATE', 'NUMBER_OF_LANES_AGENCY', 'NUMBER_OF_LANES_EFF_DATE', 'OFFICIAL_STREET_NAME_FULL_STREET_NAME', 
- 'OFFICIAL_STREET_NAME_AGENCY', 'OFFICIAL_STREET_NAME_EFF_DATE',  'ROAD_CLASS_AGENCY', 'ROAD_CLASS_EFF_DATE', 'ROAD_NET_ELEMENT_SOURCE_AGENCY', 
-'EXTERNAL_IDENT', 'ROAD_NET_ELEMENT_SOURCE_EFF_DATE']
+'DIRECTION_OF_TRAFFIC_FLOW_CDE', 'UNPAVED_SURFACE_TYPE_CDE', 'SHAPE']
 
 roads_df = roads_df[final_field_order]
 
@@ -274,14 +263,17 @@ print('Exporting compiled dataset.')
 roads_df.spatial.to_featureclass(os.path.join(directory, 'files_for_delivery.gdb', 'ORN_Road_Segments'), overwrite= True)
 
 #Toll Points field encoding
+print('Importing and encoding Toll Points data')
 tp_df = pd.DataFrame.spatial.from_featureclass(os.path.join(workingGDB, 'ORN_Toll_Points')) # ORN_Toll_Points created in QGIS with the linear referencing plugin
 tp_df = tp_df.drop(['EVENT_ID', 'AT_MEASURE', 'lrs_err'], axis=1)
 NumberizeField(tp_df, 'TOLL_POINT', 'TOLL_PNT_TYP', {'Unknown' :-1, 'Physical' : 1, 'Virtual' : 2, 'Hybrid' : 3})
 tp_df.spatial.to_featureclass(os.path.join(directory, 'files_for_delivery.gdb', 'ORN_toll_booths'), overwrite= True)
 
 #Blocked Passages field encoding
+print('Importing and encoding Blocked Passages data')
 bp_df = pd.DataFrame.spatial.from_featureclass(os.path.join(workingGDB, 'ORN_BLocked_Passages'))
 bp_df = bp_df.drop(['EVENT_ID', 'AT_MEASURE', 'lrs_err'], axis=1)
 NumberizeField(bp_df, 'BLOCKED_PA', 'BLKD_PASS_TYP', {'Unknown' : -1, 'Permanent' : 1, 'Removable' : 2})
 bp_df.spatial.to_featureclass(os.path.join(directory, 'files_for_delivery.gdb', 'ORN_blocked_passages'), overwrite= True)
+
 print('DONE!')

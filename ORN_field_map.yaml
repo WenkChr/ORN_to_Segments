@@ -18,7 +18,7 @@ data:
   spatial: True
 conform:
   addrange:
-    acqtech: ACQUISITION_TECHNIQUE
+    acqtech: ACQUISITION_TECHNIQUE_CDE
     metacover:
     credate: CREATION_DATE
     datasetnam:
@@ -34,7 +34,7 @@ conform:
     r_hnumf: R_FIRST_HOUSE_NUM
     l_hnumsuff:
     r_hnumsuff:
-    l_hnumtypf:
+    l_hnumtypf: 
     r_hnumtypf:
     l_hnumstr: L_HOUSE_NUMBER_STRUCTURE_CDE
     r_hnumstr: R_HOUSE_NUMBER_STRUCTURE_CDE
@@ -71,25 +71,25 @@ conform:
   ferryseg:
     acqtech:
     metacover:
-    credate:
+    credate: CREATION_DATE
     datasetnam:
     accuracy:
     provider:
     revdate:
     specvers:
-    closing:
+    closing: 
     ferrysegid:
-    roadclass:
-    nid:
-    rtename1en:
+    roadclass: ROAD_CLASS_CDE
+    nid: NATIONAL_UUID
+    rtename1en: ROUTE_NAME_ENGLISH_1
     rtename2en:
     rtename3en:
     rtename4en:
-    rtename1fr:
+    rtename1fr: ROUTE_NAME_FRENCH_1
     rtename2fr:
     rtename3fr:
     rtename4fr:
-    rtnumber1:
+    rtnumber1: ROUTE_NUMBER_1
     rtnumber2:
     rtnumber3:
     rtnumber4:
@@ -98,14 +98,14 @@ conform:
     acqtech:
     metacover:
     credate:
-    datasetnam: ORN_Junctions
+    datasetnam: 
     accuracy:
     provider:
     revdate:
     specvers:
-    exitnbr: EXIT_NUMBER
-    junctype: JUNCTION_TYPE
-    nid: NATIONAL_UUID
+    exitnbr: 
+    junctype: 
+    nid: 
   roadseg:
     acqtech:
     metacover:
@@ -119,42 +119,42 @@ conform:
     r_adddirfg:
     adrangenid:
     closing:
-    exitnbr:
-    l_hnumf:
-    r_hnumf:
-    roadclass:
-    l_hnuml:
-    r_hnuml:
-    nid:
-    nbrlanes:
+    exitnbr: EXIT_NUMBER
+    l_hnumf: L_FIRST_HOUSE_NUM
+    r_hnumf: R_FIRST_HOUSE_NUM
+    roadclass: ROAD_CLASS_CDE
+    l_hnuml: L_LAST_HOUSE_NUMBER
+    r_hnuml: R_LAST_HOUSE_NUMBER
+    nid: NATIONAL_UUID
+    nbrlanes: NUMBER_OF_LANES
     l_placenam:
     r_placenam:
-    l_stname_c:
-    r_stname_c:
-    pavsurf:
-    pavstatus:
-    roadjuris:
-    roadsegid:
-    rtename1en:
+    l_stname_c: L_FULL_STREET_NAME
+    r_stname_c: R_FULL_STREET_NAME
+    pavsurf: PAVED_SURFACE_TYPE_CDE
+    pavstatus: PAVEMENT_STATUS_CDE
+    roadjuris: JURISDICTION
+    roadsegid: OGF_ID
+    rtename1en: ROUTE_NAME_ENGLISH_1
     rtename2en:
     rtename3en:
     rtename4en:
-    rtename1fr:
+    rtename1fr: ROUTE_NAME_FRENCH_1
     rtename2fr:
     rtename3fr:
     rtename4fr:
-    rtnumber1:
+    rtnumber1: ROUTE_NUMBER_1
     rtnumber2:
     rtnumber3:
     rtnumber4:
     rtnumber5:
-    speed:
-    strunameen:
-    strunamefr:
+    speed: SPEED_LIMIT
+    strunameen: STRUCTURE_NAME_ENGLISH
+    strunamefr: STRUCTURE_NAME_FRENCH
     structid:
-    structtype:
-    trafficdir:
-    unpavsurf:
+    structtype: STRUCTURE_TYPE_CDE
+    trafficdir: DIRECTION_OF_TRAFFIC_FLOW_CDE
+    unpavsurf: UNPAVED_SURFACE_TYPE_CDE
   strplaname:
     acqtech:
     metacover:
