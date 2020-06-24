@@ -22,7 +22,7 @@ conform:
     metacover:
     credate: CREATION_DATE
     datasetnam:
-    accuracy:
+    accuracy: ROAD_ABSOLUTE_ACCURACY
     provider:
     revdate: REVISION_DATE
     specvers:
@@ -45,8 +45,8 @@ conform:
     l_hnumtypl:
     r_hnumtypl:
     nid: NATIONAL_UUID
-    l_offnanid:
-    r_offnanid:
+    l_offnanid: NATIONAL_UUID
+    r_offnanid: NATIONAL_UUID
     l_rfsysind:
     r_rfsysind:
   altnamlink:
@@ -156,21 +156,21 @@ conform:
     trafficdir: DIRECTION_OF_TRAFFIC_FLOW_CDE
     unpavsurf: UNPAVED_SURFACE_TYPE_CDE
   strplaname:
-    acqtech:
+    acqtech: ACQUISITION_TECHNIQUE_CDE
     metacover:
-    credate:
+    credate: CREATION_DATE
     datasetnam:
-    accuracy:
+    accuracy: ROAD_ABSOLUTE_ACCURACY
     provider:
-    revdate:
+    revdate: REVISION_DATE
     specvers:
-    dirprefix:
-    dirsuffix:
+    dirprefix: L_DIR_PRE
+    dirsuffix: L_DIR_SUF
     muniquad:
-    nid:
+    nid: NATIONAL_UUID
     placename:
     placetype:
-    province:
+    province: "Ontario"
     starticle:
     namebody:
     strtypre:
