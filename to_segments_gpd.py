@@ -40,7 +40,6 @@ OGF_IDS = roads_df.OGF_ID.unique()
 # Remove tables and fc's that require specific treatment or are not required 
 for tbl in ['ORN_ROAD_NET_ELEMENT', 'ORN_JUNCTION', 'ORN_BLOCKED_PASSAGE', 'ORN_TOLL_POINT', 'ORN_UNDERPASS', 'ORN_STREET_NAME_PARSED', 'ORN_ADDRESS_INFO', 'ORN_ROUTE_NAME', 'ORN_ROUTE_NUMBER', 'ORN_OFFICIAL_STREET_NAME']:
     tables.remove(tbl)
-
 #Make Address Ranges on L/R
 add_rng_df = gpd.read_file(ORN_GDB, layer='ORN_ADDRESS_INFO') # get full dataset
 field_prefix = 'ADDRESS_INFO'
@@ -136,7 +135,7 @@ for row in add_rng_df.itertuples():
 
 #Merge the Address Range data to the roads data beofre looping other tables 
 roads_df = roads_df.merge(add_rng_base, how= 'left', left_on='OGF_ID', right_on= 'ORN_ROAD_NET_ELEMENT_ID')
-roads_df = roads_df.drop(['OBJECTID', 'ORN_ROAD_NET_ELEMENT_ID', 'HOUSE_NUMBER_STRUCTURE', 
+roads_df = roads_df.drop(['ORN_ROAD_NET_ELEMENT_ID', 'HOUSE_NUMBER_STRUCTURE', 
                         'LENGTH','STREET_SIDE', 'FROM_JUNCTION_ID', 'TO_JUNCTION_ID'], axis=1)
 
 print('Adding non address data to table')
@@ -144,7 +143,6 @@ for table in tables: #Loop for line tables
     field_prefix = table[4:]
     print(f'Running segmentification on: {table}')
     tbl_df = gpd.read_file(ORN_GDB, layer=table)
-    tbl_df = tbl_df.drop(['OBJECTID'], axis=1)
     #Rename Table fields
     tbl_df.rename(columns={'AGENCY_NAME' : field_prefix + '_AGENCY', 
                             'EFFECTIVE_DATETIME' : field_prefix + '_EFF_DATE',
@@ -178,7 +176,7 @@ for table in ['ORN_ROUTE_NUMBER', 'ORN_ROUTE_NAME']:
     field_prefix = table[4:]
     print(f'Running segmentification on: {table}')
     tbl_df = gpd.read_file(ORN_GDB, layer=table)
-    tbl_df = tbl_df.drop(['OBJECTID', 'EVENT_ID', 'AGENCY_NAME'], axis=1) # Drop some excess fields
+    tbl_df = tbl_df.drop(['EVENT_ID', 'AGENCY_NAME'], axis=1) # Drop some excess fields
     print(f'iterating over matches for the ORN_NET_ID in {table}')
     for row in roads_df.itertuples():
         ogf_id = row.OGF_ID
@@ -267,7 +265,7 @@ final_field_order = ['OGF_ID', 'NATIONAL_UUID', 'ROAD_ELEMENT_TYPE', 'ACQUISITIO
 'ALTERNATE_STREET_NAME_FULL_STREET_NAME', 'ALTERNATE_STREET_NAME_EFF_DATE', 'SURFACE_TYPE', 'PAVED_SURFACE_TYPE_CDE', 'PAVEMENT_STATUS', 
 'PAVEMENT_STATUS_CDE', 'JURISDICTION', 'JURISDICTION_AGENCY', 'ROUTE_NAME_ENGLISH_1', 'ROUTE_NAME_FRENCH_1', 'ROUTE_NUMBER_1', 'SPEED_LIMIT', 
 'STRUCTURE_NAME_ENGLISH', 'STRUCTURE_NAME_FRENCH', 'STRUCTURE_TYPE', 'STRUCTURE_TYPE_CDE', 'DIRECTION_OF_TRAFFIC_FLOW', 
-'DIRECTION_OF_TRAFFIC_FLOW_CDE', 'UNPAVED_SURFACE_TYPE_CDE', 'SHAPE']
+'DIRECTION_OF_TRAFFIC_FLOW_CDE', 'UNPAVED_SURFACE_TYPE_CDE', 'geometry']
 
 roads_df = roads_df[final_field_order]
 
