@@ -7,11 +7,11 @@ coverage:
     subdivision: Ontario
   website: https://geohub.lio.gov.on.ca/datasets/mnrf::ontario-road-network-orn-road-net-element
 license:
-  url:
-  text:
+  url:  https://www.ontario.ca/page/open-government-licence-ontario 
+  text: Open Government Licence – Ontario
 language: en
 data:
-  filename: ORN_Segmented.gdb
+  filename: Files_for_delivery.gdb
   layer: ORN_Road_Segments
   driver: OpenFileGDB
   crs: "ESPG: 4269"
