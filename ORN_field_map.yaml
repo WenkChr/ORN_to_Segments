@@ -11,11 +11,12 @@ license:
   text:
 language: en
 data:
-  filename:
-  layer:
-  driver:
-  crs:
+  filename: ORN_Segmented.gdb
+  layer: ORN_Road_Segments
+  driver: OpenFileGDB
+  crs: "ESPG: 4269"
   spatial: True
+  query: "\" ROAD_ELEMENT_TYPE\" <> FERRY_CONNECTION"
 conform:
   addrange:
     acqtech: ACQUISITION_TECHNIQUE_CDE
