@@ -26,16 +26,16 @@ directory = os.getcwd()
 ORN_GDB = os.path.join(directory, 'Non_Sensitive.gdb')
 workingGDB = os.path.join(directory, 'workingGDB.gdb')
 outGDB = os.path.join(directory, 'files_for_delivery.gdb') 
-road_ele_data = os.path.join(ORN_GDB, 'ORN_ROAD_NET_ELEMENT') # Full road dataset
-#road_ele_data = os.path.join(workingGDB, 'ORN_net_element_tester') #Test area road dataset
+#road_ele_data = os.path.join(ORN_GDB, 'ORN_ROAD_NET_ELEMENT') # Full road dataset
+road_ele_data = os.path.join(workingGDB, 'ORN_net_element_tester') #Test area road dataset
 
 #----------------------------------------------------------------------------------------------------------------
 # Main script
 
 tables = fiona.listlayers(ORN_GDB) # List of everything in ORN_GDB
 print('Reading road data into spatial dataframe')
-#roads_df = pd.DataFrame.spatial.from_featureclass(road_ele_data, dtypes= {'OGF_ID': 'int', 'FROM_JUNCTION_ID':'int', 'TO_JUNCTION_ID': 'int'}) 
 roads_df = gpd.read_file(workingGDB, layer='ORN_net_element_tester')
+
 OGF_IDS = roads_df.OGF_ID.unique()
 # Remove tables and fc's that require specific treatment or are not required 
 for tbl in ['ORN_ROAD_NET_ELEMENT', 'ORN_JUNCTION', 'ORN_BLOCKED_PASSAGE', 'ORN_TOLL_POINT', 'ORN_UNDERPASS', 'ORN_STREET_NAME_PARSED', 'ORN_ADDRESS_INFO', 'ORN_ROUTE_NAME', 'ORN_ROUTE_NUMBER', 'ORN_OFFICIAL_STREET_NAME']:
@@ -143,6 +143,7 @@ for table in tables: #Loop for line tables
     field_prefix = table[4:]
     print(f'Running segmentification on: {table}')
     tbl_df = gpd.read_file(ORN_GDB, layer=table)
+    tbl_df = tbl_df.drop('geometry', axis=1)
     #Rename Table fields
     tbl_df.rename(columns={'AGENCY_NAME' : field_prefix + '_AGENCY', 
                             'EFFECTIVE_DATETIME' : field_prefix + '_EFF_DATE',
@@ -157,10 +158,10 @@ for table in tables: #Loop for line tables
                         tbl_df['TO_MEASURE'] - tbl_df['FROM_MEASURE']) #Get the measure dif value 
 
     print(f'Roads length: {len(roads_df)} Table Length: {len(tbl_df)}')
-    merged = roads_df.merge(tbl_df, how= 'left', left_on='OGF_ID', right_on= 'ORN_ROAD_NET_ELEMENT_ID')
+    merged = gpd.GeoDataFrame(roads_df.merge(tbl_df, how= 'left', left_on='OGF_ID', right_on= 'ORN_ROAD_NET_ELEMENT_ID'))
     #Sort measure dif values highest to lowest and then drop duplicate OGF_ID records from the dataframe. Leaving only the largest dif (longest seg)
     merged.sort_values(by=[field_prefix + '_measure_dif'], ascending= True)
-    merged = merged.drop_duplicates(subset=['OGF_ID'], keep='first')
+    merged = gpd.GeoDataFrame(merged.drop_duplicates(subset=['OGF_ID'], keep='first'))
     merged.astype({'OGF_ID' : int})
     print('Length of dataframe: ' + str(len(merged)))
     merged = merged.drop( [field_prefix + '_measure_dif',
@@ -170,6 +171,7 @@ for table in tables: #Loop for line tables
                         'ORN_ROAD_NET_ELEMENT_ID'],
                          axis=1) # Removes non-essential fields
     roads_df = merged
+
 print('Creating route name and number multi fields')
 #Route Name and Number Multifields
 for table in ['ORN_ROUTE_NUMBER', 'ORN_ROUTE_NAME']:
@@ -177,7 +179,7 @@ for table in ['ORN_ROUTE_NUMBER', 'ORN_ROUTE_NAME']:
     print(f'Running segmentification on: {table}')
     tbl_df = gpd.read_file(ORN_GDB, layer=table)
     tbl_df = tbl_df.drop(['EVENT_ID', 'AGENCY_NAME'], axis=1) # Drop some excess fields
-    print(f'iterating over matches for the ORN_NET_ID in {table}')
+    print(f'Iterating over matches for the ORN_NET_ID in {table}')
     for row in roads_df.itertuples():
         ogf_id = row.OGF_ID
         matched_df = tbl_df.loc[tbl_df['ORN_ROAD_NET_ELEMENT_ID'] == ogf_id] # df of compiled matches
@@ -255,37 +257,26 @@ NumberizeField(roads_df, 'SURFACE_TYPE', 'PAVED_SURFACE_TYPE', {'Unknown' : -1,
 direction_cde = {'None' : 0, 'North' : 1, 'Nord' : 2, 'South' : 3, 'Sud' : 4, 'East' : 5, 'Est' : 6, 'West' : 7, 'Ouest' : 8, 'North West' : 9,
             'Nord Ouest' : 10, 'North East' : 11, 'Nord Est' : 12, 'South West' :13, 'Sud Ouest' : 14, 'South East' : 15, 'Sud Est' : 16, 
             'Central' : 17, 'Centre' : 18}
-
+ 
 NumberizeField(roads_df, 'L_DIR_PRE', 'L_DIR_PRE', direction_cde)
 NumberizeField(roads_df, 'L_DIR_SUF', 'L_DIR_SUF', direction_cde)
-
-final_field_order = ['OGF_ID', 'NATIONAL_UUID', 'ROAD_ELEMENT_TYPE', 'ACQUISITION_TECHNIQUE', 'ACQUISITION_TECHNIQUE_CDE', 'CREATION_DATE', 
-'REVISION_DATE', 'EXIT_NUMBER', 'L_FIRST_HOUSE_NUM', 'R_FIRST_HOUSE_NUM', 'L_HOUSE_NUMBER_STRUCTURE_CDE', 'R_HOUSE_NUMBER_STRUCTURE_CDE', 
-'L_LAST_HOUSE_NUM', 'R_LAST_HOUSE_NUM', 'ROAD_CLASS', 'ROAD_CLASS_CDE', 'NUMBER_OF_LANES', 'L_FULL_STREET_NAME', 'R_FULL_STREET_NAME', 
-'ALTERNATE_STREET_NAME_FULL_STREET_NAME', 'ALTERNATE_STREET_NAME_EFF_DATE', 'SURFACE_TYPE', 'PAVED_SURFACE_TYPE_CDE', 'PAVEMENT_STATUS', 
-'PAVEMENT_STATUS_CDE', 'JURISDICTION', 'JURISDICTION_AGENCY', 'ROUTE_NAME_ENGLISH_1', 'ROUTE_NAME_FRENCH_1', 'ROUTE_NUMBER_1', 'SPEED_LIMIT', 
-'STRUCTURE_NAME_ENGLISH', 'STRUCTURE_NAME_FRENCH', 'STRUCTURE_TYPE', 'STRUCTURE_TYPE_CDE', 'DIRECTION_OF_TRAFFIC_FLOW', 
-'DIRECTION_OF_TRAFFIC_FLOW_CDE', 'UNPAVED_SURFACE_TYPE_CDE', 'geometry']
-
-roads_df = roads_df[final_field_order]
 
 #Export the complete roads df
 print('Exporting compiled dataset.')
 roads_df.to_file(os.path.join(directory, 'files_for_delivery.gpkg'), layer= 'ORN_Road_Segments', driver='GPKG')
 
-sys.exit()
 #Toll Points field encoding
 print('Importing and encoding Toll Points data')
 tp_df = gpd.read_file(workingGDB, layer= 'ORN_Toll_Points') # ORN_Toll_Points created in QGIS with the linear referencing plugin
 tp_df = tp_df.drop(['EVENT_ID', 'AT_MEASURE', 'lrs_err'], axis=1)
 NumberizeField(tp_df, 'TOLL_POINT', 'TOLL_PNT_TYP', {'Unknown' :-1, 'Physical' : 1, 'Virtual' : 2, 'Hybrid' : 3})
-tp_df.to_file(os.path.join(directory, 'files_for_delivery.gdb'), layer='ORN_toll_booths', driver='GPKG')
+tp_df.to_file(os.path.join(directory, 'files_for_delivery.gpkg'), layer='ORN_toll_booths', driver='GPKG')
 
 #Blocked Passages field encoding
 print('Importing and encoding Blocked Passages data')
 bp_df = gpd.read_file(workingGDB, layer='ORN_BLocked_Passages')
 bp_df = bp_df.drop(['EVENT_ID', 'AT_MEASURE', 'lrs_err'], axis=1)
 NumberizeField(bp_df, 'BLOCKED_PA', 'BLKD_PASS_TYP', {'Unknown' : -1, 'Permanent' : 1, 'Removable' : 2})
-bp_df.to_file(os.path.join(directory, 'files_for_delivery.gdb'), layer= 'ORN_blocked_passages', driver='GPKG')
+bp_df.to_file(os.path.join(directory, 'files_for_delivery.gpkg'), layer= 'ORN_blocked_passages', driver='GPKG')
 
 print('DONE!')
