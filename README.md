@@ -10,5 +10,6 @@ Steps to process the ORN LRS into road segments:
 
 3.) Fill in the YAML files one for each NRN data product documentation and descriptions of each field can be found here: https://nrn-rrn.readthedocs.io/en/latest/feature_catalog.html.#
 
+Description of segmentation process:
 
-
+There is no perfect solution for getting an LRS into a simple line segment file some granularity in the data will always be lost due to the overlapping nature of a LRS. The base case solution here was to look at every road segments and its associated tables and take the attribute that covered the longest portion of that line segment. So for non address fields such as pavement surface or number of lanes the difference between the FROM_MEASURE and the TO_MEASURE fields are calculated and the section that covers the longest distance over that road segment is chosen as the value that will be used in the segmented version of the data.  
