@@ -25,10 +25,10 @@ These data points were created in QGIS instead
 directory = os.getcwd()
 ORN_GDB = os.path.join(directory, 'Non_Sensitive.gdb')
 workingGDB = os.path.join(directory, 'workingGDB.gdb')
-outGDB = os.path.join(directory, 'files_for_delivery.gdb') 
 #road_ele_data = os.path.join(ORN_GDB, 'ORN_ROAD_NET_ELEMENT') # Full road dataset
 road_ele_data = os.path.join(workingGDB, 'ORN_net_element_tester') #Test area road dataset
-
+espg = 4269
+gdf_crs = {'init':f'espg:{espg}'}
 #----------------------------------------------------------------------------------------------------------------
 # Main script
 
@@ -158,10 +158,10 @@ for table in tables: #Loop for line tables
                         tbl_df['TO_MEASURE'] - tbl_df['FROM_MEASURE']) #Get the measure dif value 
 
     print(f'Roads length: {len(roads_df)} Table Length: {len(tbl_df)}')
-    merged = gpd.GeoDataFrame(roads_df.merge(tbl_df, how= 'left', left_on='OGF_ID', right_on= 'ORN_ROAD_NET_ELEMENT_ID'))
+    merged = gpd.GeoDataFrame(roads_df.merge(tbl_df, how= 'left', left_on='OGF_ID', right_on= 'ORN_ROAD_NET_ELEMENT_ID'), crs= f'EPSG:{espg}')
     #Sort measure dif values highest to lowest and then drop duplicate OGF_ID records from the dataframe. Leaving only the largest dif (longest seg)
     merged.sort_values(by=[field_prefix + '_measure_dif'], ascending= True)
-    merged = gpd.GeoDataFrame(merged.drop_duplicates(subset=['OGF_ID'], keep='first'))
+    merged = gpd.GeoDataFrame(merged.drop_duplicates(subset=['OGF_ID'], keep='first'), crs= f'EPSG:{espg}')
     merged.astype({'OGF_ID' : int})
     print('Length of dataframe: ' + str(len(merged)))
     merged = merged.drop( [field_prefix + '_measure_dif',
