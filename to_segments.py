@@ -261,7 +261,6 @@ NumberizeField(roads_df, 'L_DIR_SUF', 'L_DIR_SUF', direction_cde)
 #Export the complete roads df
 print('Exporting compiled dataset.')
 roads_df.spatial.to_featureclass(os.path.join(directory, 'Files_for_delivery.gdb', 'ORN_Road_Segments'), overwrite= True)
-sys.exit()
 #Toll Points field encoding
 print('Importing and encoding Toll Points data')
 tp_df = pd.DataFrame.spatial.from_featureclass(os.path.join(workingGDB, 'ORN_Toll_Points')) # ORN_Toll_Points created in QGIS with the linear referencing plugin
