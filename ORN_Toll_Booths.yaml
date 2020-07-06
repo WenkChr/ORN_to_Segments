@@ -1,6 +1,6 @@
 coverage:
   country: ca
-  province: on
+  province: "on"
   ISO3166:
     alpha2: CA-ON
     country: Canada
@@ -16,6 +16,7 @@ data:
   driver: OpenFileGDB
   crs: "ESPG:4269"
   spatial: True
+  query: "\" TOLL_POINT_TYP_CDE\" >= 0"
 conform:
   tollpoint:
     acqtech:

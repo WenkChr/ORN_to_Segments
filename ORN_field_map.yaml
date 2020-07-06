@@ -1,6 +1,6 @@
 coverage:
   country: ca
-  province: on
+  province: "on"
   ISO3166:
     alpha2: CA-ON
     country: Canada
