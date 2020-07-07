@@ -27,8 +27,8 @@ ORN_GDB = os.path.join(directory, 'Non_Sensitive.gdb')
 workingGDB = os.path.join(directory, 'workingGDB.gdb')
 #road_ele_data = os.path.join(ORN_GDB, 'ORN_ROAD_NET_ELEMENT') # Full road dataset
 road_ele_data = os.path.join(workingGDB, 'ORN_net_element_tester') #Test area road dataset
-espg = 4269
-gdf_crs = {'init':f'espg:{espg}'}
+espg = 4269 #EPSG number
+
 #----------------------------------------------------------------------------------------------------------------
 # Main script
 
@@ -264,6 +264,9 @@ NumberizeField(roads_df, 'L_DIR_SUF', 'L_DIR_SUF', direction_cde)
 #Export the complete roads df
 print('Exporting compiled dataset.')
 roads_df.to_file(os.path.join(directory, 'files_for_delivery.gpkg'), layer= 'ORN_Road_Segments', driver='GPKG')
+
+#----------------------------------------------------------------------------------------------------------------------------------
+# Encode fields in point datasets and add them to the GPKG
 
 #Toll Points field encoding
 print('Importing and encoding Toll Points data')
